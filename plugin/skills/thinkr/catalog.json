@@ -16,8 +16,9 @@
     "Pay when safeToPay is true: the seller is bonded, not leaving, and its bond covers your payment. claimable says whether you could claim it back."
   ],
   "install": {
-    "type": "bankr",
-    "repoPath": "thinkr",
-    "command": "install the thinkr skill from https://github.com/BankrBot/skills/tree/main/thinkr"
+    "type": "external",
+    "provider": "skills.sh",
+    "command": "npx skills add thinkragents/thinkr",
+    "reference": "https://github.com/thinkragents/thinkr"
   }
 }
