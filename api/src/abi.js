@@ -732,6 +732,30 @@ export const bondsAbi = [
   },
   {
     "type": "function",
+    "name": "sealedByOwner",
+    "inputs": [
+      {
+        "name": "agentId",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "epoch",
+        "type": "uint64",
+        "internalType": "uint64"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "sealers",
     "inputs": [
       {
@@ -750,6 +774,11 @@ export const bondsAbi = [
         "name": "sealer",
         "type": "address",
         "internalType": "address"
+      },
+      {
+        "name": "since",
+        "type": "uint64",
+        "internalType": "uint64"
       }
     ],
     "stateMutability": "view"
@@ -1173,6 +1202,11 @@ export const bondsAbi = [
   {
     "type": "error",
     "name": "BadProof",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "BadRecipient",
     "inputs": []
   },
   {
