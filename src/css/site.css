@@ -504,3 +504,36 @@ h2 em { font-style: normal; color: inherit; }
 .venues__list img { width: 20px; height: 20px; object-fit: contain; flex: none; opacity: 0.85; transition: opacity var(--t-fast) var(--ease); }
 .venues__list a:hover { color: var(--ink); }
 .venues__list a:hover img { opacity: 1; }
+
+/* listings not live yet: shown, greyed, and tagged with where they stand */
+.venues__list .venue {
+  display: flex; align-items: center; gap: 12px;
+  padding: calc(var(--sp) * 4) calc(var(--sp) * 2) calc(var(--sp) * 4) 0;
+  font-family: var(--f-mono); font-size: var(--t-mono);
+  letter-spacing: var(--tr-mono); text-transform: uppercase; color: var(--ink-4);
+}
+.venues__list .is-pending .venue { opacity: 0.55; cursor: default; }
+.venues__list .is-pending img { filter: grayscale(1); opacity: 0.6; }
+.venues__list em {
+  margin-left: auto; font-style: normal; font-size: var(--t-micro);
+  letter-spacing: var(--tr-micro); color: var(--ink-4);
+  border: var(--rule) solid color-mix(in srgb, currentColor 30%, transparent);
+  border-radius: 999px; padding: 2px 8px; white-space: nowrap;
+}
+.venues__list .is-review em { color: var(--acid); border-color: color-mix(in srgb, var(--acid) 45%, transparent); }
+.venues__list .is-review a { padding-right: 0; }
+/* columns may shrink below their content, and a tag drops under the name rather
+   than pushing the grid wider than the screen */
+.venues__list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (min-width: 560px) { .venues__list { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.venues__list a, .venues__list .venue { flex-wrap: wrap; row-gap: 6px; }
+.venues__list a > span, .venues__list .venue > span { min-width: 0; }
+@media (max-width: 559px) { .venues__list em { margin-left: 32px; } }
+/* a long line of code must scroll inside its block, never widen the column:
+   1fr alone means minmax(auto, 1fr), which grows to the widest unbreakable line */
+.split { grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 980px) { .split { grid-template-columns: var(--col-5) minmax(0, 1fr); } }
+.split__text, .split__side, .code { min-width: 0; }
+
+.venues__k { margin-top: calc(var(--sp) * 8); }
+.venues__note { margin: calc(var(--sp) * 5) 0 0; color: var(--ink-4); font-size: var(--t-mono); line-height: 1.7; max-width: 60ch; }

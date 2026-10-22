@@ -93,19 +93,24 @@
         <!-- Where the skill is listed. Each link is the real listing, checked when it went
              live. Pending ones say so in a comment and are swapped when they land. -->
         <div class="venues">
-          <p class="code__k">Get the skill</p>
+          <p class="code__k">Works today</p>
           <ul class="venues__list">
             <li><a href="https://github.com/thinkragents/thinkr#install-the-skill" target="_blank" rel="noopener"><img src="/brands/claude.svg" alt="" width="20" height="20" /><span>Claude Code</span></a></li>
-            <!-- Claude plugin directory: add back once Anthropic approves the submission
-            <li><a href="LISTING_URL" target="_blank" rel="noopener"><img src="/brands/anthropic.svg" alt="" width="20" height="20" /><span>Claude plugins</span></a></li>
-            -->
-            <li><!-- pending merge of BankrBot/skills#806; then https://github.com/BankrBot/skills/tree/main/thinkr --><a href="https://github.com/BankrBot/skills/pull/806" target="_blank" rel="noopener"><img src="/brands/bankr.svg" alt="" width="22" height="20" /><span>Bankr</span></a></li>
-            <!-- ClawHub: publishing opens 2026-11-05 (GitHub account must be 14 days old). Then: clawhub publish, and add the live URL here
-            <li><a href="https://clawhub.ai/thinkragents/skills/thinkr" target="_blank" rel="noopener"><img src="/brands/clawhub.png" alt="" width="20" height="20" /><span>ClawHub</span></a></li>
-            -->
             <li><a href="https://www.skills.sh/thinkragents/thinkr/thinkr" target="_blank" rel="noopener"><img src="/brands/skills-sh.svg" alt="" width="18" height="18" /><span>skills.sh</span></a></li>
             <li><a href="https://github.com/thinkragents/thinkr" target="_blank" rel="noopener"><img src="/brands/github.svg" alt="" width="20" height="20" /><span>GitHub</span></a></li>
           </ul>
+          <p class="code__k venues__k">Listings on the way</p>
+          <!-- Each moves up to Works today, as a link to its listing, once it is live:
+               Claude plugin directory submitted 2026-10-22; Bankr is BankrBot/skills#806;
+               ClawHub opens 2026-11-05 (the GitHub account must be 14 days old). -->
+          <ul class="venues__list">
+            <li class="is-pending"><span class="venue"><img src="/brands/anthropic.svg" alt="" width="20" height="20" /><span>Claude apps</span><em>In review</em></span></li>
+            <li class="is-review"><a href="https://github.com/BankrBot/skills/pull/806" target="_blank" rel="noopener"><img src="/brands/bankr.svg" alt="" width="22" height="20" /><span>Bankr</span><em>In review</em></a></li>
+            <li class="is-pending"><span class="venue"><img src="/brands/clawhub.png" alt="" width="20" height="20" /><span>ClawHub</span><em>Soon</em></span></li>
+          </ul>
+          <p class="venues__note">Listings help agents find THINKR. It already installs with the lines above in
+            Claude Code and about 25 other agents. The Claude apps (web, desktop, Cowork) pick it up
+            once the Claude directory approves it.</p>
         </div>
         </div>
         </div>
