@@ -54,6 +54,17 @@ body::before {
   transition: var(--tx) var(--t-fast) var(--ease);
 }
 .act:hover { border-bottom-color: var(--acid); }
+/* the repo, set apart from the section links: the code is the credibility */
+.nav__gh {
+  margin-left: auto; display: inline-flex; align-items: center; gap: 8px;
+  font-family: var(--f-mono); font-size: var(--t-mono);
+  letter-spacing: var(--tr-mono); text-transform: uppercase; color: var(--ink-3);
+  transition: var(--tx) var(--t-fast) var(--ease);
+}
+.nav__gh:hover { color: var(--ink); }
+.nav__gh + .act { margin-left: 0; }
+.nav__gh span { display: none; }
+@media (min-width: 860px) { .nav__gh span { display: inline; } }
 .act--solid { margin: 0; display: inline-block; }
 
 /* --- page --------------------------------------------------- */
@@ -288,6 +299,8 @@ h2 em { font-style: normal; color: inherit; }
 .ledger__none { color: var(--ink-3); max-width: var(--measure); padding: 26px 0 22px; margin: 0; }
 
 /* --- foot ---------------------------------------------------- */
+.foot__gh { color: var(--ink-3); transition: var(--tx) var(--t-fast) var(--ease); }
+.foot__gh:hover { color: var(--acid); }
 .foot {
   position: relative; z-index: var(--z-page);
   display: flex; flex-wrap: wrap; gap: 8px 32px;
