@@ -12,6 +12,7 @@ const PORT = Number(process.env.PORT ?? 8402);
 const routes = [
   ['GET', '/v1/bond/:agentId', 'what a buyer reads before it pays; add ?amount= for that payment', ({ params, query }) =>
     h.getBond(params.agentId, query.get('amount') ?? undefined)],
+  ['GET', '/v1/bonds', 'every agent ever bonded, with its bond now', () => h.listBonds()],
   ['GET', '/v1/claims/:agentId', 'an agent\'s claim record', ({ params }) => h.getClaims(params.agentId)],
   ['GET', '/v1/claim/:claimId', 'one claim', ({ params }) => h.getClaim(params.claimId)],
   ['GET', '/v1/agent/:agentId', 'who owns an agent, per ERC-8004', ({ params }) => h.getAgentOwner(params.agentId)],

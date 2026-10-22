@@ -18,20 +18,19 @@ function render(list) {
   rows.innerHTML = list
     .map(
       (b) => `
-      <a class="row" href="/docs/" data-status="${b.status}">
+      <div class="row" data-status="${b.status}">
         <span class="row__id mono">${b.agentId}</span>
         <span class="row__n mono">${money(b.bonded)}</span>
         <span class="row__n mono">${money(b.available)}</span>
         <span class="row__c mono">${b.claims.filed}&#8201;/&#8201;${b.claims.discharged}&#8201;/&#8201;${b.claims.paid}</span>
         <span class="row__s">${b.status.replace('_', ' ')}</span>
-      </a>`
+      </div>`
     )
     .join('');
   empty.hidden = list.length > 0;
 }
 
 async function lookup(id) {
-  if (!API) return null;
   const [bond, claims] = await Promise.all([
     fetch(`${API}/v1/bond/${id}`).then((r) => r.json()),
     fetch(`${API}/v1/claims/${id}`).then((r) => r.json()),
@@ -40,30 +39,46 @@ async function lookup(id) {
   return { ...bond, claims: claims.summary ?? { filed: 0, discharged: 0, paid: 0 } };
 }
 
+let everyone = [];
+
 async function boot() {
-  if (!API) {
-    src.innerHTML = 'Source: <span class="mono">contract not deployed</span>';
-    q.disabled = true;
-    return;
-  }
   try {
-    const index = await fetch(`${API}/`).then((r) => r.json());
-    src.innerHTML = `Source: <a class="mono" href="${index.chain.explorer}/address/${index.contracts.bonds}">${index.contracts.bonds}</a>`;
+    const [index, register] = await Promise.all([
+      fetch(`${API}/`).then((r) => r.json()),
+      fetch(`${API}/v1/bonds`).then((r) => r.json()),
+    ]);
+    const c = index.contracts.bonds;
+    src.innerHTML = `Source: <a class="mono" href="${index.chain.explorer}/address/${c}" target="_blank" rel="noopener">${c.slice(0, 6)}…${c.slice(-4)}</a>`;
+    everyone = register.bonds ?? [];
+    render(everyone);
   } catch {
     src.innerHTML = 'Source: <span class="mono">unreachable</span>';
   }
 }
 
-q?.addEventListener('change', async () => {
+q?.addEventListener('input', async () => {
   const id = q.value.trim();
-  if (!id) return render([]);
+  if (!id) {
+    empty.textContent = 'No agent is bonded yet. The first one will appear here.';
+    return render(everyone);
+  }
+  if (!/^\d+$/.test(id)) return;
   try {
     const b = await lookup(id);
-    render(b ? [b] : []);
+    // typing 228 asks about 2, 22 and 228; only the answer for what is in the box counts
+    if (q.value.trim() !== id) return;
+    if (b.bonded === '0') {
+      rows.innerHTML = '';
+      empty.hidden = false;
+      empty.textContent = `Agent ${id} has no bond.`;
+      return;
+    }
+    render([b]);
   } catch (err) {
+    if (q.value.trim() !== id) return;
+    rows.innerHTML = '';
     empty.hidden = false;
     empty.textContent = err.message;
-    rows.innerHTML = '';
   }
 });
 

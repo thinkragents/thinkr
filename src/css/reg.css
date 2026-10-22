@@ -1,31 +1,37 @@
 /* ===========================================================
-   Register. A table is the right shape here, so it is a table,
-   ruled rather than boxed, and it scrolls inside itself rather
-   than pushing the page sideways.
+   Bond an agent. Same column, gutter and type as the home page:
+   how to bond first, then the register. Ruled, not boxed.
    =========================================================== */
 
-.reg {
-  max-width: var(--maxw); margin: 0 auto;
-  padding: calc(var(--nav-h) + var(--bay)) var(--gutter) var(--bay);
-  display: grid; gap: calc(var(--sp) * 10);
+.reg > section {
+  padding: var(--bay) var(--gutter);
+  border-top: var(--rule) solid var(--line);
+  background: color-mix(in oklab, var(--bg) 93%, transparent);
 }
+.reg > .reg__intro {
+  border-top: 0; background: none;
+  padding-top: calc(var(--nav-h) + var(--bay));
+  padding-bottom: calc(var(--bay) * 0.6);
+}
+.reg__intro h1 {
+  font-family: var(--f-sans); font-weight: 800;
+  font-size: var(--t-display); line-height: var(--lh-tight);
+  letter-spacing: var(--tr-display); text-wrap: balance;
+  max-width: 18ch; margin: 0 0 calc(var(--sp) * 7);
+}
+.reg__how .run { margin: 0; max-width: none; }
+.reg__how .split__side .code:last-child { margin-bottom: 0; }
 
-.reg__head { display: grid; gap: calc(var(--sp) * 6); align-items: end; }
-.reg__kicker {
-  font-family: var(--f-mono); font-size: var(--t-micro); letter-spacing: var(--tr-micro);
-  text-transform: uppercase; color: var(--ink-4); margin: 0 0 calc(var(--sp) * 4);
+/* the register */
+.reg__listhead {
+  display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between;
+  gap: calc(var(--sp) * 4);
 }
-.reg h1 {
-  font-size: var(--t-h1); line-height: var(--lh-tight); letter-spacing: var(--tr-display);
-  font-weight: 500; color: var(--ink); margin: 0;
-}
-.reg__lede { color: var(--ink-2); max-width: 54ch; margin: 0; }
+.reg__src { margin: 0; color: var(--ink-4); font-family: var(--f-mono); font-size: var(--t-micro); letter-spacing: var(--tr-micro); }
+.reg__src a { color: var(--acid); word-break: break-all; }
+.reg__sub { color: var(--ink-3); max-width: 60ch; margin: calc(var(--sp) * 4) 0 calc(var(--sp) * 10); }
 
-.reg__bar {
-  display: flex; flex-wrap: wrap; gap: calc(var(--sp) * 6);
-  align-items: baseline; justify-content: space-between;
-}
-.find { display: flex; align-items: baseline; gap: calc(var(--sp) * 4); }
+.find { display: flex; flex-wrap: wrap; align-items: baseline; gap: calc(var(--sp) * 4); margin-bottom: calc(var(--sp) * 8); }
 .find__k {
   font-family: var(--f-mono); font-size: var(--t-micro); letter-spacing: var(--tr-micro);
   text-transform: uppercase; color: var(--ink-4);
@@ -33,58 +39,55 @@
 .find input {
   background: transparent; border: 0; border-bottom: var(--rule) solid var(--line-hi);
   color: var(--ink); font-family: var(--f-mono); font-size: var(--t-mono);
-  letter-spacing: var(--tr-mono); padding: calc(var(--sp) * 2) 0; min-width: 22ch;
+  letter-spacing: var(--tr-mono); padding: calc(var(--sp) * 2) 0; width: min(100%, 26ch);
 }
 .find input::placeholder { color: var(--ink-4); }
 .find input:focus { outline: none; border-bottom-color: var(--acid); }
-.find input:disabled { opacity: 0.4; }
-.reg__src { margin: 0; color: var(--ink-4); font-size: var(--t-micro); }
-.reg__src a { color: var(--acid); }
 
-/* the ledger */
-.ledger { min-width: 0; overflow-x: auto; }
-.ledger__head, .row {
-  display: grid;
-  grid-template-columns: minmax(80px, 1fr) minmax(110px, 1fr) minmax(110px, 1fr) minmax(120px, 1fr) minmax(130px, 1fr);
-  gap: calc(var(--sp) * 5); align-items: baseline;
-  min-width: 640px;
+/* one grid for the head and every row, so the columns line up */
+.reg .ledger { max-width: none; }
+.reg .ledger__head, .reg .row {
+  display: grid; gap: calc(var(--sp) * 4); align-items: baseline;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.2fr);
+  padding: 0;
 }
-.ledger__head span {
+.reg .ledger__head {
+  padding-bottom: calc(var(--sp) * 3);
+  border-bottom: var(--rule) solid var(--line-hi);
   font-family: var(--f-mono); font-size: var(--t-micro); letter-spacing: var(--tr-micro);
   text-transform: uppercase; color: var(--ink-4);
 }
-.ledger__rule { height: var(--rule); background: var(--line-hi); margin: calc(var(--sp) * 3) 0 0; min-width: 640px; }
-.row {
+/* on a phone: agent, bonded, status. Available and claims come back with room */
+.reg .ledger__head > :nth-child(3), .reg .ledger__head > :nth-child(4),
+.reg .row > :nth-child(3), .reg .row > :nth-child(4) { display: none; }
+@media (min-width: 720px) {
+  .reg .ledger__head, .reg .row { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .reg .ledger__head > :nth-child(3), .reg .ledger__head > :nth-child(4),
+  .reg .row > :nth-child(3), .reg .row > :nth-child(4) { display: block; }
+}
+.reg .row {
   padding: calc(var(--sp) * 4) 0; border-bottom: var(--rule) solid var(--line);
   color: var(--ink-2); transition: var(--tx) var(--t-fast) var(--ease);
 }
-.row:hover { color: var(--ink); background: color-mix(in oklab, var(--paper) 50%, transparent); }
+.reg .row:hover { color: var(--ink); }
 .row__id { color: var(--ink); }
-.row__s { font-size: var(--t-micro); letter-spacing: var(--tr-micro); text-transform: uppercase; color: var(--ink-4); }
+.row__s { font-family: var(--f-mono); font-size: var(--t-micro); letter-spacing: var(--tr-micro); text-transform: uppercase; color: var(--ink-4); }
 .row[data-status="active"] .row__s { color: var(--acid); }
 .row[data-status="winding_down"] .row__s { color: var(--red-800); }
-.ledger__none {
-  margin: calc(var(--sp) * 6) 0 0; color: var(--ink-4); max-width: 56ch; font-size: var(--t-body);
-}
+.reg .ledger__none { padding: calc(var(--sp) * 6) 0; margin: 0; color: var(--ink-3); max-width: none; border-bottom: var(--rule) solid var(--line); }
 
-/* legend */
-.reg__legend { border-top: var(--rule) solid var(--line); padding-top: calc(var(--sp) * 6); }
-.reg__legend dl { margin: 0; }
-.reg__legend > dl > div {
-  display: grid; grid-template-columns: 150px 1fr; gap: calc(var(--sp) * 5);
-  padding: calc(var(--sp) * 3) 0; align-items: baseline;
+/* legend: three short definitions in a row, one size throughout */
+.reg__legend {
+  margin: calc(var(--sp) * 10) 0 0; display: grid; gap: calc(var(--sp) * 5);
+  grid-template-columns: minmax(0, 1fr);
 }
+@media (min-width: 720px) { .reg__legend { grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: var(--col-gap); } }
 .reg__legend dt {
   font-family: var(--f-mono); font-size: var(--t-micro); letter-spacing: var(--tr-micro);
-  text-transform: uppercase; color: var(--ink-4);
+  text-transform: uppercase; color: var(--ink-4); margin-bottom: calc(var(--sp) * 2);
 }
-.reg__legend dd { margin: 0; color: var(--ink-2); font-size: var(--t-body); }
-.reg__note { margin: calc(var(--sp) * 6) 0 0; color: var(--ink-4); max-width: 60ch; }
+.reg__legend dd { margin: 0; color: var(--ink-3); font-size: var(--t-mono); line-height: 1.6; }
+.reg__note { margin: calc(var(--sp) * 8) 0 0; color: var(--ink-4); max-width: 60ch; }
 .reg__note a { color: var(--acid); border-bottom: var(--rule) solid color-mix(in srgb, var(--acid) 40%, transparent); }
 
 .mono { font-family: var(--f-mono); font-size: var(--t-mono); letter-spacing: var(--tr-mono); }
-
-@media (min-width: 900px) {
-  .reg h1 { font-size: calc(var(--t-h1) * 1.08); }
-  .reg__head { grid-template-columns: var(--col-6) var(--col-4); column-gap: var(--col-gap); }
-}

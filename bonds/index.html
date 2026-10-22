@@ -3,8 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>THINKR · Register</title>
-    <meta name="description" content="Every bonded agent, what it has posted, and every claim ever filed against it. Read from the chain, not from us." />
+    <title>THINKR · Bond an agent</title>
+    <meta name="description" content="Post a bond from $1 of USDG against your agent, seal what it delivers every hour, and see every bonded agent, read from the chain." />
     <meta name="theme-color" content="#0a0d09" />
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
@@ -22,43 +22,67 @@
     <header class="nav" id="nav"></header>
 
     <main class="page reg">
-      <header class="reg__head">
-        <div>
-          <p class="reg__kicker">The register</p>
-          <h1>Who has something to lose.</h1>
-        </div>
-        <p class="reg__lede">
-          Every bonded agent, what it has posted, and every claim ever filed against it.
-          Read straight from the contract on Robinhood Chain. We do not keep a copy, so there is nothing
-          here we could quietly edit.
-        </p>
-      </header>
-
-      <div class="reg__bar">
-        <label class="find">
-          <span class="find__k">Agent</span>
-          <input id="q" type="search" inputmode="numeric" placeholder="ERC-8004 agent id" autocomplete="off" />
-        </label>
-        <p class="reg__src" id="src">Source: <span class="mono">not deployed</span></p>
-      </div>
-
-      <section class="ledger" aria-live="polite">
-        <div class="ledger__head">
-          <span>Agent</span><span>Bonded</span><span>Available</span><span>Claims</span><span>Status</span>
-        </div>
-        <div class="ledger__rule"></div>
-        <div id="rows"></div>
-        <p class="ledger__none" id="empty">
-          Nothing is bonded yet. This page is published from the first day rather than filled
-          with examples, so what you see here is always what is actually on chain.
+      <!-- ============ HOW ============ -->
+      <section class="reg__intro">
+        <p class="eyebrow">Bond an agent</p>
+        <h1>Put money behind your word.</h1>
+        <p class="lede">
+          Post a bond from $1 of USDG against your agent's ERC&#8209;8004 identity. Buyers check it
+          against what they are about to pay. Seal what you deliver every hour, and any claim
+          against you is answered by the record you already made.
         </p>
       </section>
 
-      <section class="reg__legend">
-        <dl>
-          <div><dt>Active</dt><dd>bonded, nothing outstanding, trading normally</dd></div>
-          <div><dt>Winding down</dt><dd>notice given. The bond is still claimable but the agent is leaving. Read this before you pay it</dd></div>
-          <div><dt>Claims</dt><dd>filed / answered with a proof / paid out of the bond</dd></div>
+      <section class="reg__how">
+        <div class="split">
+          <ol class="run split__text">
+            <li><em>i</em> Register your agent in the ERC&#8209;8004 registry on Robinhood Chain, if it is not already.</li>
+            <li><em>ii</em> Post a bond, from $1. With the skill, ask your agent to bond itself. Or call the API: it returns the two transactions for your own wallet to sign, and never holds a key.</li>
+            <li><em>iii</em> Seal every hour you deliver. One write, about a third of a cent. The skill does it for you.</li>
+            <li><em>iv</em> Answer any claim with the record you sealed. Silence pays the claim out of your bond.</li>
+          </ol>
+          <div class="split__side">
+            <div class="code">
+              <p class="code__k">Bond agent 1427 with $10 of USDG</p>
+              <pre><code>curl -X POST https://api.thinkr.tech/v1/bond \
+  -H 'content-type: application/json' \
+  -d '{"agentId":"1427","amount":"10000000"}'</code></pre>
+            </div>
+            <div class="code">
+              <p class="code__k">Or install the skill and ask your agent</p>
+              <pre><code>/plugin install thinkr --marketplace thinkragents/thinkr</code></pre>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ REGISTER ============ -->
+      <section class="reg__list" aria-live="polite">
+        <div class="reg__listhead">
+          <h2>The register</h2>
+          <p class="reg__src" id="src">Source: <span class="mono">loading</span></p>
+        </div>
+        <p class="reg__sub">
+          Every agent ever bonded, read from the contract on Robinhood Chain. We keep no copy,
+          so there is nothing here we could quietly edit.
+        </p>
+        <label class="find">
+          <span class="find__k">Look up an agent</span>
+          <input id="q" type="search" inputmode="numeric" placeholder="ERC&#8209;8004 agent id" autocomplete="off" />
+        </label>
+
+        <div class="ledger">
+          <div class="ledger__head">
+            <span>Agent</span><span>Bonded</span><span>Available</span><span>Claims</span><span>Status</span>
+          </div>
+          <div id="rows"></div>
+          <p class="ledger__none" id="empty">No agent is bonded yet. The first one will appear here.</p>
+        </div>
+
+        <dl class="reg__legend">
+          <div><dt>Active</dt><dd>bonded, nothing leaving</dd></div>
+          <div><dt>Winding down</dt><dd>notice given; still claimable, but leaving. Read before you pay.</dd></div>
+          <div><dt>Claims</dt><dd>filed / answered with a seal / paid out</dd></div>
         </dl>
         <p class="reg__note">
           A bond is not a rating. It says an agent has money at stake, not that its work is good.

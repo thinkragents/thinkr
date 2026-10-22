@@ -135,6 +135,16 @@ export const bondsAbi = [
 
   {
     type: 'event',
+    name: 'Bonded',
+    inputs: [
+      { name: 'agentId', type: 'uint256', indexed: true },
+      { name: 'from', type: 'address', indexed: true },
+      { name: 'amount', type: 'uint128', indexed: false },
+      { name: 'total', type: 'uint128', indexed: false },
+    ],
+  },
+  {
+    type: 'event',
     name: 'ClaimFiled',
     inputs: [
       { name: 'claimId', type: 'uint256', indexed: true },

@@ -124,6 +124,25 @@ export async function getBond(rawAgentId, rawPayment) {
   };
 }
 
+/**
+ * Every agent that has ever been bonded, with its bond as it stands now. Built from
+ * the contract's own Bonded events, so the register is what the chain says and
+ * nothing else. Largest bond first.
+ */
+export async function listBonds({ limit = 100 } = {}) {
+  const bonds = requireBonds();
+  const events = await eventsSince(ADDRESSES.deployedAt, { address: bonds, abi: bondsAbi, eventName: 'Bonded' });
+  const ids = [...new Set(events.map((e) => e.args.agentId.toString()))];
+  const all = await Promise.all(
+    ids.slice(0, limit).map(async (id) => {
+      const [bond, claims] = await Promise.all([getBond(id), getClaims(id)]);
+      return { ...bond, claims: claims.summary };
+    })
+  );
+  all.sort((a, b) => (BigInt(b.bonded) > BigInt(a.bonded) ? 1 : BigInt(b.bonded) < BigInt(a.bonded) ? -1 : 0));
+  return { count: all.length, bonds: all };
+}
+
 /** Claim history for one agent, straight from the logs. */
 /**
  * Every matching event since the contract was deployed, read in pages. RPCs cap how

@@ -93,6 +93,11 @@ test('posting a bond, through the API, end to end', async () => {
   assert.equal(bond.available, '500000000');
   assert.equal(bond.status, 'active');
   assert.equal(bond.safeToPay, true);
+
+  const register = await api('GET', '/v1/bonds');
+  assert.equal(register.count, 1, 'the register lists every agent ever bonded');
+  assert.equal(register.bonds[0].agentId, '1');
+  assert.equal(register.bonds[0].claims.filed, 0);
 });
 
 test('safeToPay is about the payment when the buyer names one', async () => {
