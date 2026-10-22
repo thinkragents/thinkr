@@ -38,16 +38,53 @@ contract Handler is Test {
         try bonds.bond(id, amount) {} catch {}
     }
 
-    function fileClaim(uint256 seed, uint128 amount, uint256 nonce) external {
+    struct Paid {
+        uint256 agentId;
+        address buyer;
+        bytes32 ref;
+    }
+
+    Paid[] public paid;
+    uint256 public attackerWins;
+    address public attacker = makeAddr("attacker");
+
+    /// @dev A buyer (one of the owners, paying another agent) pays and is recorded.
+    function pay(uint256 seed, uint256 buyerSeed, uint128 amount, uint256 nonce) external {
         (uint256 id,) = _agent(seed);
-        amount = uint128(bound(amount, 1, 5_000e6));
-        uint64 epoch = bonds.currentEpoch() > 2 ? bonds.currentEpoch() - 2 : 0;
-        vm.prank(owners[nonce % owners.length]);
-        try bonds.fileClaim(id, keccak256(abi.encode(nonce, seed)), epoch, amount) returns (
-            uint256
-        ) {
+        address who = owners[buyerSeed % owners.length];
+        bytes32 ref = keccak256(abi.encode("ref", nonce));
+        amount = uint128(bound(amount, 1, 2_000e6));
+        vm.prank(who);
+        try bonds.pay(id, ref, amount) {
+            paid.push(Paid(id, who, ref));
+        } catch {}
+    }
+
+    /// @dev A buyer claims on one of its own recorded payments.
+    function fileClaim(uint256 which) external {
+        if (paid.length == 0) return;
+        Paid memory p = paid[which % paid.length];
+        vm.prank(p.buyer);
+        try bonds.fileClaim(p.agentId, p.ref) returns (uint256) {
             claimCount++;
         } catch {}
+    }
+
+    /// @dev Someone who never paid tries to claim, on invented refs and on refs it
+    ///      has seen others use. Must never work.
+    function attack(uint256 seed, uint256 which, bool useSeen) external {
+        (uint256 id,) = _agent(seed);
+        bytes32 ref = useSeen && paid.length > 0
+            ? paid[which % paid.length].ref
+            : keccak256(abi.encode("invented", which));
+        vm.prank(attacker);
+        try bonds.fileClaim(id, ref) returns (uint256) {
+            attackerWins++;
+        } catch {}
+    }
+
+    function paidCount() external view returns (uint256) {
+        return paid.length;
     }
 
     function settle(uint256 id) external {
@@ -91,9 +128,8 @@ contract SolvencyInvariantTest is Test {
     function setUp() public {
         usdg = new MockUSDG();
         registry = new MockRegistry();
-        bonds = new ThinkrBonds(
-            IIdentityRegistry(address(registry)), IERC20(address(usdg)), 10e6, 25e4
-        );
+        bonds =
+            new ThinkrBonds(IIdentityRegistry(address(registry)), IERC20(address(usdg)), 1e6, 1e4);
 
         uint256[] memory agents = new uint256[](3);
         address[] memory owners = new address[](3);
@@ -105,6 +141,10 @@ contract SolvencyInvariantTest is Test {
             vm.prank(owners[i]);
             usdg.approve(address(bonds), type(uint256).max);
         }
+        address att = makeAddr("attacker");
+        usdg.mint(att, 1_000_000e6);
+        vm.prank(att);
+        usdg.approve(address(bonds), type(uint256).max);
 
         vm.warp(30 days);
         handler = new Handler(bonds, usdg, agents, owners);
@@ -118,7 +158,7 @@ contract SolvencyInvariantTest is Test {
             owed += amount;
         }
         for (uint256 id = 1; id < bonds.nextClaimId(); ++id) {
-            (,,, uint128 stake,,, ThinkrBonds.ClaimState state) = bonds.claims(id);
+            (,,,, uint128 stake,,, ThinkrBonds.ClaimState state,) = bonds.claims(id);
             if (state == ThinkrBonds.ClaimState.Open) owed += stake;
         }
         assertGe(usdg.balanceOf(address(bonds)), owed, "contract is short");
@@ -130,8 +170,9 @@ contract SolvencyInvariantTest is Test {
     ///      is also evaluated once before any call is made.
     function test_handler_can_reach_a_filed_claim() public {
         handler.postBond(0, 500e6);
+        handler.pay(0, 1, 100e6, 7);
         handler.skipAhead(3 hours);
-        handler.fileClaim(0, 100e6, 1);
+        handler.fileClaim(0);
         assertGt(handler.claimCount(), 0, "the handler never files a claim");
     }
 
@@ -139,6 +180,27 @@ contract SolvencyInvariantTest is Test {
         for (uint256 i; i < handler.agentCount(); ++i) {
             (uint128 amount, uint128 reserved,,) = bonds.bonds(handler.agentAt(i));
             assertLe(reserved, amount);
+        }
+    }
+
+    /// @notice Version 1's hole, as an invariant: whoever calls, whatever they name,
+    ///         nobody who did not pay ever opens a claim.
+    function invariant_nobody_claims_without_paying() public view {
+        assertEq(handler.attackerWins(), 0, "a claim was opened without a payment");
+    }
+
+    /// @notice Every claim on the books matches a real payment, by the claimant, for
+    ///         exactly what was paid, and that payment is marked claimed.
+    function invariant_every_claim_is_a_real_payment() public view {
+        for (uint256 id = 1; id < bonds.nextClaimId(); ++id) {
+            (bytes32 paymentId, uint256 agentId, address claimant, uint128 amount,,,,,) =
+                bonds.claims(id);
+            (uint256 pAgent, address pBuyer, uint128 pAmount,, bool claimed) =
+                bonds.payments(paymentId);
+            assertEq(pBuyer, claimant, "claimant did not pay");
+            assertEq(pAgent, agentId, "claim on another agent");
+            assertEq(pAmount, amount, "claim differs from the payment");
+            assertTrue(claimed, "payment not marked claimed");
         }
     }
 }

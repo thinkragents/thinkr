@@ -81,12 +81,11 @@ export async function getBond(rawAgentId, rawPayment) {
     : amount(rawPayment, 'amount');
   const bonds = requireBonds();
 
-  const [record, free, now, minBond, minClaim] = await Promise.all([
+  const [record, free, now, minBond] = await Promise.all([
     client.readContract({ address: bonds, abi: bondsAbi, functionName: 'bonds', args: [id] }),
     client.readContract({ address: bonds, abi: bondsAbi, functionName: 'available', args: [id] }),
     client.readContract({ address: bonds, abi: bondsAbi, functionName: 'currentEpoch' }),
     client.readContract({ address: bonds, abi: bondsAbi, functionName: 'minBond' }),
-    client.readContract({ address: bonds, abi: bondsAbi, functionName: 'minClaimFor', args: [id] }),
   ]);
 
   const [total, reserved, bondedAt, withdrawAfter] = record;
@@ -102,24 +101,14 @@ export async function getBond(rawAgentId, rawPayment) {
     withdrawAfter: leaving ? Number(withdrawAfter) : null,
     status: total === 0n ? 'unbonded' : leaving ? 'winding_down' : 'active',
     epoch: Number(now),
-    // The smallest claim this agent can be taken to task for. It is one percent of
-    // what it has posted, so it tracks the size of business the agent is doing
-    // rather than a number fixed at deployment.
-    minClaim: minClaim.toString(),
     // The one line an agent should branch on. A bond it cannot claim against is not
     // cover, and an agent that has given notice may be gone before a claim ripens.
-    // With a payment it also has to cover that payment. Whether the payment is large
-    // enough to claim is reported apart, as `claimable`: folding it in made a bigger
-    // bond read as less safe for small calls, since the claim floor is 1% of the bond.
+    // With a payment it also has to cover that payment.
     safeToPay: free >= minBond && !leaving && (payment === null || free >= payment),
-    ...(payment === null
-      ? {}
-      : {
-          payment: payment.toString(),
-          covers: free >= payment,
-          // nothing posted means nothing to claim against, whatever the floor says
-          claimable: total > 0n && payment >= minClaim,
-        }),
+    ...(payment === null ? {} : { payment: payment.toString(), covers: free >= payment }),
+    // Only payments made through THINKR's pay call can be claimed: a claim has to name
+    // a payment the contract recorded, by the address that made it.
+    payWith: 'POST /v1/pay',
     chain: { id: CHAIN.id, name: CHAIN.name },
   };
 }
@@ -206,7 +195,7 @@ export async function getClaims(rawAgentId, { fromBlock = ADDRESSES.deployedAt }
 export async function getClaim(rawClaimId) {
   const id = agentId(rawClaimId);
   const bonds = requireBonds();
-  const [agent, claimant, amt, claimBond, epoch, filedAt, state] = await client.readContract({
+  const [paymentId, agent, claimant, amt, claimBond, epoch, filedAt, state, ref] = await client.readContract({
     address: bonds,
     abi: bondsAbi,
     functionName: 'claims',
@@ -217,6 +206,8 @@ export async function getClaim(rawClaimId) {
     claimId: id.toString(),
     agentId: agent.toString(),
     claimant,
+    ref,
+    paymentId,
     amount: amt.toString(),
     claimBond: claimBond.toString(),
     epoch: Number(epoch),
@@ -225,7 +216,6 @@ export async function getClaim(rawClaimId) {
   };
 }
 
-/** Who owns an agent, per ERC-8004. Works whether or not ThinkrBonds is deployed. */
 export async function getAgentOwner(rawAgentId) {
   const id = agentId(rawAgentId);
   try {
@@ -332,78 +322,145 @@ async function quote(id, bonds, data) {
 }
 
 /** File a claim. The stake is quoted before you sign anything. */
-export async function buildClaim({ agentId: raw, ref, epoch, amount: rawAmount }) {
+function wallet(value, field) {
+  try {
+    return getAddress(value);
+  } catch {
+    throw new BadRequest(`${field} must be an address`);
+  }
+}
+
+/**
+ * Pay a seller through THINKR, so the payment is on record. The money goes straight
+ * to the agent's owner in the same transaction; nothing is held. Only payments made
+ * this way can ever be claimed, which is what stops claims on payments that never
+ * happened.
+ */
+export async function buildPay({ agentId: raw, ref, amount: rawAmount }) {
   const id = agentId(raw);
-  const payment = hash32(ref, 'ref');
+  const r = hash32(ref, 'ref');
   const value = amount(rawAmount, 'amount');
   const bonds = requireBonds();
-  if (epoch === undefined || epoch === null) throw new BadRequest('epoch is required');
-
-  const [free, stake, floor] = await Promise.all([
-    client.readContract({ address: bonds, abi: bondsAbi, functionName: 'available', args: [id] }),
-    client.readContract({ address: bonds, abi: bondsAbi, functionName: 'claimBondFor', args: [value] }),
-    client.readContract({ address: bonds, abi: bondsAbi, functionName: 'minClaimFor', args: [id] }),
-  ]);
-  if (value < floor) {
-    throw new BadRequest(
-      `the smallest claim this contract accepts is ${floor} and you asked for ${value}. ` +
-        'Below that, take the loss and stop buying from that agent.'
-    );
-  }
-  if (value > free) {
-    throw new BadRequest(`that agent has ${free} unreserved, which will not cover a claim of ${value}`);
-  }
-
+  const bond = await getBond(id, value);
   return {
-    stake: stake.toString(),
-    stakeNote: 'You lose this if the seller proves it delivered. You get it back, plus the claim, if it does not answer.',
+    bond: { bonded: bond.bonded, available: bond.available, status: bond.status, covers: bond.covers, safeToPay: bond.safeToPay },
+    note: 'Keep the ref: the seller seals its delivery under it, and a claim names it.',
     transactions: [
       tx(
-        ADDRESSES.currency ?? bonds,
-        encodeFunctionData({ abi: erc20Abi, functionName: 'approve', args: [bonds, stake] }),
-        'approve your stake'
+        ADDRESSES.currency,
+        encodeFunctionData({ abi: erc20Abi, functionName: 'approve', args: [bonds, value] }),
+        'approve the payment'
       ),
       tx(
         bonds,
-        encodeFunctionData({ abi: bondsAbi, functionName: 'fileClaim', args: [id, payment, BigInt(epoch), value] }),
-        'file the claim'
+        encodeFunctionData({ abi: bondsAbi, functionName: 'pay', args: [id, r, value] }),
+        `pay agent ${id}, recorded under ${r.slice(0, 10)}`
       ),
     ],
   };
 }
 
+/** The payments an agent took, optionally for one hour: what a seller seals. */
+export async function listPayments(rawAgentId, rawEpoch) {
+  const id = agentId(rawAgentId);
+  const bonds = requireBonds();
+  const events = await eventsSince(ADDRESSES.deployedAt, {
+    address: bonds, abi: bondsAbi, eventName: 'Paid', args: { agentId: id },
+  });
+  const epoch = rawEpoch === undefined || rawEpoch === null || rawEpoch === '' ? null : Number(rawEpoch);
+  const items = events
+    .filter((e) => epoch === null || Number(e.args.epoch) === epoch)
+    .map((e) => ({
+      paymentId: e.args.paymentId,
+      buyer: e.args.buyer,
+      ref: e.args.ref,
+      amount: e.args.amount.toString(),
+      epoch: Number(e.args.epoch),
+      block: Number(e.blockNumber),
+    }));
+  return { agentId: id.toString(), ...(epoch === null ? {} : { epoch }), count: items.length, payments: items };
+}
+
 /**
- * Answer a claim. Send back the same delivery list you attested and we find the
- * proof. Verified here first, so a transaction that would revert never goes out.
+ * File a claim on a payment you made through THINKR. The contract looks the payment
+ * up by agent, your address and the ref, so there is nothing to choose but which
+ * payment: the amount and the hour come from the record. Checked here first, so a
+ * claim that would revert never costs gas.
  */
-export async function buildDischarge({ claimId, ref, deliveries: list }) {
+export async function buildClaim({ agentId: raw, ref, from }) {
+  const id = agentId(raw);
+  const r = hash32(ref, 'ref');
+  const buyer = wallet(from, 'from');
+  const bonds = requireBonds();
+
+  const paymentId = await client.readContract({ address: bonds, abi: bondsAbi, functionName: 'paymentIdOf', args: [id, buyer, r] });
+  const [[, payer, value, epoch, claimed], free, block] = await Promise.all([
+    client.readContract({ address: bonds, abi: bondsAbi, functionName: 'payments', args: [paymentId] }),
+    client.readContract({ address: bonds, abi: bondsAbi, functionName: 'available', args: [id] }),
+    client.getBlock(),
+  ]);
+  if (payer === '0x0000000000000000000000000000000000000000') {
+    throw new BadRequest(`there is no payment from ${buyer} to agent ${id} under that ref. Only payments made through THINKR's pay call can be claimed.`);
+  }
+  if (claimed) throw new BadRequest('that payment has already been claimed');
+
+  const opens = (Number(epoch) + 3) * 3600; // both hours a seller may seal in are final
+  const closes = (Number(epoch) + 1) * 3600 + 7 * 24 * 3600;
+  const now = Number(block.timestamp);
+  if (now < opens) throw new BadRequest(`claims on this payment open at ${new Date(opens * 1000).toISOString()}, once the seller can no longer seal`);
+  if (now > closes) throw new BadRequest('the claim period for this payment has ended');
+  if (value > free) throw new BadRequest(`that agent has ${free} unreserved, which will not cover this payment of ${value}`);
+
+  const stake = await client.readContract({ address: bonds, abi: bondsAbi, functionName: 'claimBondFor', args: [value] });
+  return {
+    amount: value.toString(),
+    stake: stake.toString(),
+    stakeNote: 'You lose this if the seller proves it delivered. You get it back, plus the payment, if it does not answer within 48 hours.',
+    transactions: [
+      tx(
+        ADDRESSES.currency,
+        encodeFunctionData({ abi: erc20Abi, functionName: 'approve', args: [bonds, stake] }),
+        'approve your stake'
+      ),
+      tx(bonds, encodeFunctionData({ abi: bondsAbi, functionName: 'fileClaim', args: [id, r] }), 'file the claim'),
+    ],
+  };
+}
+
+/**
+ * Answer a claim. Send back the delivery list you sealed and we find the proof. The
+ * delivery may be in the hour of the payment or the hour after; the list is matched
+ * against both roots. Verified here first, so a transaction that would revert never
+ * goes out.
+ */
+export async function buildDischarge({ claimId, deliveries: list }) {
   const id = agentId(claimId);
-  const payment = hash32(ref, 'ref');
   const items = deliveries(list);
   const bonds = requireBonds();
 
-  const match = items.find((d) => d.ref === payment);
-  if (!match) throw new BadRequest(`that delivery list does not contain ref ${payment}`);
+  const c = await getClaim(id);
+  if (c.state !== 'open') throw new BadRequest(`claim ${id} is ${c.state}`);
+  const match = items.find((d) => d.ref === c.ref.toLowerCase());
+  if (!match) throw new BadRequest(`that delivery list does not contain ref ${c.ref}`);
 
-  const leaves = items.map((d) => leaf(d.ref, d.digest));
-  const tree = build(leaves);
+  const tree = build(items.map((d) => leaf(d.ref, d.digest)));
   const target = leaf(match.ref, match.digest);
-
-  const onChain = await client
-    .readContract({ address: bonds, abi: bondsAbi, functionName: 'claims', args: [id] })
-    .then(([agent, , , , epoch]) =>
-      client.readContract({ address: bonds, abi: bondsAbi, functionName: 'roots', args: [agent, epoch] })
-    );
-
-  if (onChain !== tree.root) {
+  const agent = BigInt(c.agentId);
+  const candidates = [c.epoch, c.epoch + 1];
+  const roots = await Promise.all(
+    candidates.map((e) => client.readContract({ address: bonds, abi: bondsAbi, functionName: 'roots', args: [agent, BigInt(e)] }))
+  );
+  const i = roots.findIndex((r) => r === tree.root);
+  if (i === -1) {
     throw new BadRequest(
-      `this list builds root ${tree.root}, but the epoch you attested is ${onChain}. ` +
-        'The list must be exactly the one you committed, including deliveries unrelated to this claim.'
+      `this list builds root ${tree.root}, which is neither hour ${candidates[0]} (${roots[0]}) nor hour ${candidates[1]} (${roots[1]}). ` +
+        'Send exactly the list you sealed for the hour this delivery is in.'
     );
   }
 
   return {
     root: tree.root,
+    sealedIn: candidates[i],
     digest: match.digest,
     transactions: [
       tx(
@@ -411,7 +468,7 @@ export async function buildDischarge({ claimId, ref, deliveries: list }) {
         encodeFunctionData({
           abi: bondsAbi,
           functionName: 'discharge',
-          args: [id, payment, match.digest, proof(tree, target)],
+          args: [id, BigInt(candidates[i]), match.digest, proof(tree, target)],
         }),
         'prove the delivery and close the claim'
       ),

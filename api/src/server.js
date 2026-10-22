@@ -18,7 +18,10 @@ const routes = [
   ['GET', '/v1/agent/:agentId', 'who owns an agent, per ERC-8004', ({ params }) => h.getAgentOwner(params.agentId)],
   ['POST', '/v1/bond', 'post or top up collateral', ({ body }) => h.buildBond(body)],
   ['POST', '/v1/attest', 'commit an epoch of deliveries', ({ body }) => h.buildAttest(body)],
-  ['POST', '/v1/claim', 'file a claim', ({ body }) => h.buildClaim(body)],
+  ['POST', '/v1/pay', 'pay an agent through THINKR, so the payment can be claimed', ({ body }) => h.buildPay(body)],
+  ['GET', '/v1/payments/:agentId', 'payments an agent took; add ?epoch= for one hour', ({ params, query }) =>
+    h.listPayments(params.agentId, query.get('epoch') ?? undefined)],
+  ['POST', '/v1/claim', 'file a claim on a payment you made through THINKR', ({ body }) => h.buildClaim(body)],
   ['POST', '/v1/claim/:claimId/discharge', 'answer a claim with a proof', ({ params, body }) =>
     h.buildDischarge({ ...body, claimId: params.claimId })],
   ['POST', '/v1/claim/:claimId/settle', 'pay out a claim the seller let run', ({ params }) =>
@@ -35,7 +38,7 @@ const index = {
   service: 'THINKR',
   description: 'Sealed evidence with money behind it, for agent commerce: bonds and hourly delivery seals on Robinhood Chain.',
   chain: { id: CHAIN.id, name: CHAIN.name, explorer: CHAIN.explorer },
-  contracts: { registry: ADDRESSES.registry, bonds: ADDRESSES.bonds },
+  contracts: { registry: ADDRESSES.registry, bonds: ADDRESSES.bonds, currency: ADDRESSES.currency },
   priced: pricingEnabled,
   endpoints: routes.map((r) => ({ method: r.method, path: r.path, summary: r.summary })),
   source: 'https://github.com/thinkragents/thinkr',

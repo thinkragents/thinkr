@@ -44,6 +44,31 @@ export const tools = [
     readOnly: true,
   },
   {
+    name: 'pay_agent',
+    title: 'Pay an agent through THINKR so the payment is on record',
+    description:
+      'Builds the transactions to pay a seller agent through THINKR. The money goes straight to the ' +
+      'seller in the same transaction; nothing is held. Only payments made this way can be claimed ' +
+      'later, so use this when you want the seller\'s bond behind the purchase. Keep the ref: the ' +
+      'seller seals its delivery under it and a claim names it.',
+    schema: {
+      agentId,
+      ref: hash32.describe('what both sides call this purchase, as 32 bytes'),
+      amount: units,
+    },
+    run: (args) => h.buildPay(args),
+  },
+  {
+    name: 'list_payments',
+    title: 'See what your agent was paid, to seal it',
+    description:
+      'The payments made to an agent through THINKR, optionally for one hour (epoch). A seller seals ' +
+      'the refs of what it delivered from this list each hour.',
+    schema: { agentId, epoch: z.number().int().nonnegative().optional() },
+    run: ({ agentId: id, epoch }) => h.listPayments(id, epoch),
+    readOnly: true,
+  },
+  {
     name: 'post_bond',
     title: 'Post collateral so buyers will pay you',
     description:
@@ -70,14 +95,14 @@ export const tools = [
     name: 'file_claim',
     title: 'Claim against an agent that took payment and delivered nothing',
     description:
-      'Quotes your stake first, then builds the transaction. You stake 2% of what you claim. If the ' +
-      'seller proves it delivered you lose the stake; if it stays quiet for 48 hours you get the stake ' +
-      'back plus the claim, out of its bond.',
+      'For a payment you made through pay_agent. The amount and hour come from the payment record. ' +
+      'Quotes your stake first (2% of the payment), then builds the transaction. If the seller proves ' +
+      'it delivered you lose the stake; if it stays quiet for 48 hours you get the stake back plus the ' +
+      'payment, out of its bond. Claims open two hours after the hour you paid in.',
     schema: {
       agentId,
-      ref: hash32.describe('the transaction that bought nothing: x402 payment, action_ref or receipt id, as 32 bytes'),
-      epoch: z.number().int().nonnegative(),
-      amount: units,
+      ref: hash32.describe('the ref you paid under'),
+      from: z.string().describe('your address, the one that paid'),
     },
     run: (args) => h.buildClaim(args),
   },
@@ -85,10 +110,10 @@ export const tools = [
     name: 'discharge_claim',
     title: 'Answer a claim with proof you delivered',
     description:
-      'Send the claim id and the delivery list you attested for that epoch. The proof is built and ' +
-      'checked against the root already on chain, so a transaction that would revert never goes out. ' +
-      'The claimant\'s stake comes to you.',
-    schema: { claimId: z.union([z.number().int().positive(), z.string()]), ref: hash32, deliveries: z.array(delivery).min(1) },
+      'Send the claim id and the delivery list you sealed for the hour of the payment or the hour ' +
+      'after. The proof is built and checked against the root already on chain, so a transaction that ' +
+      'would revert never goes out. The claimant\'s stake comes to you.',
+    schema: { claimId: z.union([z.number().int().positive(), z.string()]), deliveries: z.array(delivery).min(1) },
     run: (args) => h.buildDischarge(args),
   },
   {
