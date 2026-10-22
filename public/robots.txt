@@ -1,3 +1,0 @@
-# Pre launch: keep the site out of search until it goes public. Remove on launch day.
-User-agent: *
-Disallow: /
