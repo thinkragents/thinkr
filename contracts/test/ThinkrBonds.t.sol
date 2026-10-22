@@ -505,6 +505,58 @@ contract ThinkrBondsTest is Test {
         bonds.attest(AGENT, epoch + 1, keccak256("root"));
     }
 
+    /// @notice Review 3: a leaked sealer key seals junk first; the owner replaces it within
+    ///         the window, answers the claim, and the thief's claim fails.
+    function test_owner_replaces_a_root_its_sealer_wrote() public {
+        address thief = makeAddr("thief");
+        vm.prank(seller);
+        bonds.setSealer(AGENT, thief);
+        _bond(500 * ONE);
+        vm.warp((uint256(bonds.currentEpoch()) + 1) * bonds.EPOCH_LENGTH()); // a fresh hour
+        uint64 epoch = _pay(stranger, REF, 100 * ONE);
+        vm.warp((uint256(epoch) + 1) * bonds.EPOCH_LENGTH());
+        vm.prank(thief);
+        bonds.attest(AGENT, epoch, keccak256("junk"));
+        // the owner seals over it, inside the window
+        vm.prank(seller);
+        bonds.attest(AGENT, epoch, Merkle.leaf(REF, DIGEST));
+        // and the owner's root is final: the sealer cannot overwrite it back
+        vm.prank(thief);
+        vm.expectRevert(ThinkrBonds.RootAlreadySet.selector);
+        bonds.attest(AGENT, epoch, keccak256("junk again"));
+        _openClaims(epoch);
+        uint256 id = _claim(stranger, REF);
+        bonds.discharge(id, epoch, DIGEST, new bytes32[](0));
+        assertEq(uint8(_state(id)), uint8(ThinkrBonds.ClaimState.Discharged));
+    }
+
+    /// @notice Review 3: a sealer cannot seal hours that ended before it was appointed.
+    function test_a_sealer_cannot_seal_hours_before_its_appointment() public {
+        uint64 old = bonds.currentEpoch();
+        vm.warp((uint256(old) + 1) * bonds.EPOCH_LENGTH() + 1 hours);
+        address key = makeAddr("key");
+        vm.prank(seller);
+        bonds.setSealer(AGENT, key);
+        vm.prank(key);
+        vm.expectRevert(ThinkrBonds.NotASealer.selector);
+        bonds.attest(AGENT, old, keccak256("root"));
+    }
+
+    function test_a_payout_cannot_be_sent_to_the_contract_or_nowhere() public {
+        _bond(100 * ONE);
+        uint64 epoch = _pay(buyer, REF, 10 * ONE);
+        _openClaims(epoch);
+        uint256 id = _claim(buyer, REF);
+        vm.warp(block.timestamp + bonds.CHALLENGE_WINDOW());
+        bonds.settle(id);
+        vm.startPrank(buyer);
+        vm.expectRevert(ThinkrBonds.BadRecipient.selector);
+        bonds.collect(address(bonds));
+        vm.expectRevert(ThinkrBonds.BadRecipient.selector);
+        bonds.collect(address(0));
+        vm.stopPrank();
+    }
+
     function test_only_the_owner_appoints_a_sealer() public {
         vm.prank(stranger);
         vm.expectRevert(ThinkrBonds.NotAgentOwner.selector);

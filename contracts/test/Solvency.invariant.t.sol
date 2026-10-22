@@ -94,6 +94,32 @@ contract Handler is Test {
         agentId;
     }
 
+    /// @dev An owner appoints itself or a stranger as sealer, and that key seals.
+    function sealerSeals(uint256 which, bytes32 digest, bool appoint) external {
+        if (paid.length == 0) return;
+        Paid memory p = paid[which % paid.length];
+        address owner = owners[p.agentId - 1];
+        address key = makeAddr("sealerKey");
+        if (appoint) {
+            vm.prank(owner);
+            bonds.setSealer(p.agentId, key);
+        }
+        bytes32 root = keccak256(bytes.concat(keccak256(abi.encode(p.ref, digest))));
+        vm.prank(key);
+        try bonds.attest(p.agentId, p.epoch, root) {} catch {}
+    }
+
+    /// @dev Someone other than the seller submits a proof.
+    function thirdPartyDischarge(uint256 which, bytes32 digest) external {
+        if (claimIds.length == 0) return;
+        uint256 id = claimIds[which % claimIds.length];
+        (,,,,,, uint64 epoch,,) = bonds.claims(id);
+        vm.prank(attacker);
+        try bonds.discharge(id, epoch, digest, new bytes32[](0)) {
+            discharged++;
+        } catch {}
+    }
+
     function settle(uint256 which) external {
         if (claimIds.length == 0) return;
         try bonds.settle(claimIds[which % claimIds.length]) {
@@ -109,8 +135,9 @@ contract Handler is Test {
 
     function collect(uint256 seed) external {
         address who = seed % 4 == 3 ? attacker : owners[seed % owners.length];
+        // half the time the payout goes elsewhere, which must leave the books balanced
         vm.prank(who);
-        try bonds.collect(who) {} catch {}
+        try bonds.collect(seed % 2 == 0 ? who : makeAddr("elsewhere")) {} catch {}
     }
 
     /// @dev Someone who never paid tries to claim, on invented refs and on refs it has

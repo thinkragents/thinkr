@@ -23,6 +23,14 @@ import {IIdentityRegistry} from "./interfaces/IIdentityRegistry.sol";
 /// outage does not cost an honest seller; anyone may submit a valid proof; payouts go
 /// wherever the owed account says; stakes from answered claims are owed to the seller.
 ///
+/// After a third review: the owner may replace a root its sealer wrote while the window is
+/// open, and a sealer only seals hours that ended after it was appointed.
+///
+/// Known limits: a sealer is valid again if the agent returns to the same owner, so clear
+/// it before transferring. A seller should seal before transferring an agent, since only
+/// the owner and its sealer can seal. An outage longer than the six hour window can still
+/// cost a seller its seals. Stakes owed to a seller are collected by that address.
+///
 /// What this does not do: tell whether sealed work was good, or sent. A seller that seals
 /// a record of every payment keeps its bond; the seal fixes that record in time, before any
 /// dispute, which is the evidence an adjudicator needs. Sellers should seal every payment
@@ -133,11 +141,17 @@ contract ThinkrBonds is ReentrancyGuard {
     struct Sealer {
         address owner; // the owner that appointed it; a transfer makes it void
         address sealer;
+        uint64 since; // the first hour it may seal: hours that ended after it was appointed
     }
 
     /// @notice A key an agent's owner lets seal for it, so the owner key need not sign
     ///         every hour.
     mapping(uint256 agentId => Sealer) public sealers;
+
+    /// @notice Whether an hour's root was written by the owner itself. A root an appointed
+    ///         sealer wrote can be replaced by the owner while the hour's window is open,
+    ///         so a leaked sealer key cannot lock the owner out of its own seal.
+    mapping(uint256 agentId => mapping(uint64 epoch => bool)) public sealedByOwner;
 
     uint256 public nextClaimId = 1;
 
@@ -203,6 +217,7 @@ contract ThinkrBonds is ReentrancyGuard {
     error EmptyRoot();
     error NotASealer();
     error SellerIsThisContract();
+    error BadRecipient();
 
     // ---------------------------------------------------------- constructor
 
@@ -378,24 +393,32 @@ contract ThinkrBonds is ReentrancyGuard {
     ///         from the moment the agent changes hands.
     function setSealer(uint256 agentId, address sealer) external {
         address owner = _onlyOwner(agentId);
-        sealers[agentId] = Sealer({owner: owner, sealer: sealer});
+        sealers[agentId] = Sealer({owner: owner, sealer: sealer, since: currentEpoch()});
         emit SealerSet(agentId, owner, sealer);
     }
 
     /// @notice Seal the delivery root for a finished hour. Once, within six hours after.
     ///         The owner may seal, or the sealer it appointed.
+    ///         Within the window the owner may replace a root its sealer wrote, never the
+    ///         other way round, and nothing can change once the window closes, before any
+    ///         claim on that hour can open.
     function attest(uint256 agentId, uint64 epoch, bytes32 root) external {
         address owner = registry.ownerOf(agentId);
-        if (msg.sender != owner) {
+        bool byOwner = msg.sender == owner;
+        if (!byOwner) {
             Sealer memory appointed = sealers[agentId];
             if (appointed.sealer != msg.sender || appointed.owner != owner) revert NotASealer();
+            if (epoch < appointed.since) revert NotASealer();
         }
         if (root == bytes32(0)) revert EmptyRoot();
         if (epoch >= currentEpoch()) revert EpochNotEnded();
         if (block.timestamp >= attestDeadline(epoch)) revert AttestWindowClosed();
-        if (roots[agentId][epoch] != bytes32(0)) revert RootAlreadySet();
+        if (roots[agentId][epoch] != bytes32(0) && (!byOwner || sealedByOwner[agentId][epoch])) {
+            revert RootAlreadySet();
+        }
 
         roots[agentId][epoch] = root;
+        if (byOwner) sealedByOwner[agentId][epoch] = true;
         emit Attested(agentId, epoch, root);
     }
 
@@ -493,6 +516,8 @@ contract ThinkrBonds is ReentrancyGuard {
     ///         you answered. Sent wherever you say, so a frozen or contract account can
     ///         still move it.
     function collect(address to) external nonReentrant {
+        // sent here or nowhere, it would be off the books and lost
+        if (to == address(this) || to == address(0)) revert BadRecipient();
         uint256 amount = owed[msg.sender];
         if (amount == 0) revert NothingOwed();
         owed[msg.sender] = 0;
