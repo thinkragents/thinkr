@@ -23,7 +23,7 @@ contract LocalScript is Script {
         registry.register(1, seller);
 
         ThinkrBonds bonds = new ThinkrBonds(
-            IIdentityRegistry(address(registry)), IERC20(address(usdg)), 10e6, 25e4
+            IIdentityRegistry(address(registry)), IERC20(address(usdg)), 10e6, 1_000e6, 1e4, 25e4
         );
 
         usdg.mint(seller, 1_000_000e6);
