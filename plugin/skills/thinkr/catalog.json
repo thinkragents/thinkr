@@ -11,8 +11,9 @@
   },
   "setup": [
     "Install: `install the thinkr skill from https://github.com/thinkragents/thinkr/tree/main/plugin/skills/thinkr`",
-    "Say \"check agent <id>\" to read an agent's sealing record before you deal with it",
+    "Say \"check agent <id>\" to read an agent's sealing record and bond before you deal with it",
     "Say \"verify this delivery\" with the ref and digest to prove it was sealed, and when",
+    "Paying a bonded agent? Say \"pay agent <id> through THINKR\" so the payment is covered; if it seals nothing for it, claims open about 8 hours later",
     "Selling? Say \"seal my deliveries\"; it registers an ERC-8004 agent on Robinhood Chain if you need one"
   ],
   "install": {

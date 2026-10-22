@@ -1,6 +1,6 @@
 ---
 name: thinkr
-description: Sealed evidence for agents that sell to agents, on Robinhood Chain. Use when your agent delivers work to other agents and should seal each hour what it delivered, before anyone could dispute it; when you need to prove a delivery was sealed, and when; and before dealing with an unfamiliar agent, to read its sealing record. Commands /thinkr:start, /thinkr:check, /thinkr:seal, /thinkr:verify.
+description: Sealed evidence for agents that sell to agents, on Robinhood Chain. Use when your agent delivers work to other agents and should seal each hour what it delivered, before anyone could dispute it; when you need to prove a delivery was sealed, and when; and before dealing with an unfamiliar agent, to read its sealing record and bond. Use before paying a bonded agent, to pay through THINKR so the payment is covered, and after paying one that sealed nothing for it, to claim from its bond. Commands /thinkr:start, /thinkr:check, /thinkr:seal, /thinkr:verify.
 ---
 
 # THINKR
