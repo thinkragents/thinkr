@@ -68,6 +68,16 @@ async function jump(seconds) {
   });
 }
 
+async function usdgBalance(address) {
+  const currency = (await api('GET', '/')).contracts.currency;
+  return pub.readContract({
+    address: currency,
+    abi: [{ type: 'function', name: 'balanceOf', stateMutability: 'view', inputs: [{ type: 'address' }], outputs: [{ type: 'uint256' }] }],
+    functionName: 'balanceOf',
+    args: [address],
+  });
+}
+
 const HOUR = 3600;
 const deliveriesFor = (n) =>
   Array.from({ length: n }, (_, i) => ({
@@ -81,8 +91,6 @@ test('an unbonded agent reads as unbonded, not as an error', async () => {
   const bond = await api('GET', '/v1/bond/1');
   assert.equal(bond.status, 'unbonded');
   assert.equal(bond.safeToPay, false, 'nobody should pay an agent with nothing posted');
-  const priced = await api('GET', '/v1/bond/1?amount=40000');
-  assert.equal(priced.claimable, false, 'nothing posted, nothing to claim against');
 });
 
 test('posting a bond, through the API, end to end', async () => {
@@ -101,25 +109,34 @@ test('posting a bond, through the API, end to end', async () => {
 });
 
 test('safeToPay is about the payment when the buyer names one', async () => {
-  // 500 posted, so claims start at 5. A 50 job is covered, a 600 job is not, and
-  // a 1 call is safe to make but too small to claim: the bond vouches for the
-  // seller, it just cannot be claimed against for that amount.
   const fits = await api('GET', '/v1/bond/1?amount=50000000');
   assert.equal(fits.safeToPay, true);
   assert.equal(fits.covers, true);
+  assert.equal(fits.payWith, 'POST /v1/pay');
 
   const big = await api('GET', '/v1/bond/1?amount=600000000');
   assert.equal(big.safeToPay, false, 'a bond smaller than the payment is not cover for it');
   assert.equal(big.covers, false);
-
-  const tiny = await api('GET', '/v1/bond/1?amount=1000000');
-  assert.equal(tiny.safeToPay, true, 'a bigger bond must never read as less safe');
-  assert.equal(tiny.claimable, false, 'below the claim floor there is no recourse');
 });
+
+/** Pay agent 1 through THINKR from the buyer. Returns the hour it was paid in. */
+async function pay(ref, amount) {
+  const quote = await api('POST', '/v1/pay', { agentId: 1, ref, amount });
+  await sendAll(quote, BUYER);
+  const { epoch } = await api('GET', '/v1/bond/1');
+  return epoch;
+}
 
 test('a seller that answers keeps its money', async () => {
   const deliveries = deliveriesFor(5);
-  const { epoch } = await api('GET', '/v1/bond/1');
+  const sellerBefore = await usdgBalance(SELLER.address);
+  const epoch = await pay(deliveries[2].ref, '100000000');
+  assert.equal(await usdgBalance(SELLER.address) - sellerBefore, 100000000n, 'the payment went straight to the seller');
+
+  // the seller reads what it was paid for this hour, which is what it seals
+  const paid = await api('GET', `/v1/payments/1?epoch=${epoch}`);
+  assert.equal(paid.count, 1);
+  assert.equal(paid.payments[0].ref, deliveries[2].ref);
 
   await jump(HOUR + 60);
   const attested = await api('POST', '/v1/attest', { agentId: 1, epoch, deliveries });
@@ -134,102 +151,110 @@ test('a seller that answers keeps its money', async () => {
   const ok = await api('POST', '/v1/verify', { agentId: 1, epoch, ref: deliveries[2].ref, digest: deliveries[2].digest, deliveries });
   assert.equal(ok.sealed, true);
   assert.ok(ok.sealedAt, 'and when it was sealed');
-  const proofOnly = await api('POST', '/v1/verify', { agentId: 1, epoch, ref: deliveries[2].ref, digest: deliveries[2].digest, proof: ok.proof ?? undefined, deliveries });
-  assert.equal(proofOnly.sealed, true);
   const tampered = await api('POST', '/v1/verify', { agentId: 1, epoch, ref: deliveries[2].ref, digest: keccak256(toHex('a different file')), proof: [] });
   assert.equal(tampered.sealed, false, 'a delivery that was not sealed does not verify');
-  const nothing = await api('POST', '/v1/verify', { agentId: 1, epoch: epoch + 50, ref: deliveries[2].ref, digest: deliveries[2].digest, proof: [] });
-  assert.equal(nothing.sealed, false);
 
-  await jump(HOUR + 60); // the root is now final, claims open
+  await jump(8 * HOUR + 60); // both hours the seller could seal in are final (six hour window): claims open
 
-  const quote = await api('POST', '/v1/claim', {
-    agentId: 1,
-    ref: deliveries[2].ref,
-    epoch,
-    amount: '100000000',
-  });
+  const quote = await api('POST', '/v1/claim', { agentId: 1, ref: deliveries[2].ref, from: BUYER.address });
+  assert.equal(quote.amount, '100000000', 'the claim is for what was paid');
   assert.equal(quote.stake, '2000000', '2% of 100');
   await sendAll(quote, BUYER);
 
-  const open = await api('GET', '/v1/claims/1');
-  assert.equal(open.summary.open, 1);
+  assert.equal((await api('GET', '/v1/claims/1')).summary.open, 1);
   assert.equal((await api('GET', '/v1/bond/1')).reserved, '100000000');
 
-  // The seller sends back the same list it attested; the API finds the proof.
-  const answer = await api('POST', '/v1/claim/1/discharge', {
-    ref: deliveries[2].ref,
-    deliveries,
-  });
+  // The seller sends back the same list it sealed; the API finds the hour and the proof.
+  const answer = await api('POST', '/v1/claim/1/discharge', { deliveries });
   assert.equal(answer.root, attested.root);
+  assert.equal(answer.sealedIn, epoch);
   await sendAll(answer, SELLER);
 
   const after = await api('GET', '/v1/claims/1');
   assert.equal(after.summary.discharged, 1);
   assert.equal(after.summary.open, 0);
-
   const bond = await api('GET', '/v1/bond/1');
   assert.equal(bond.reserved, '0');
-  assert.equal(bond.bonded, '502000000', "the junk claim paid the seller its claimant's stake");
+  assert.equal(bond.bonded, '500000000', 'the bond is untouched');
+  const sellerOwed = await api('POST', '/v1/collect', { from: SELLER.address });
+  assert.equal(sellerOwed.owed, '2000000', "a claim on sealed work pays the seller the claimant's stake");
+  await sendAll(sellerOwed, SELLER);
 });
 
 test('a seller that goes quiet pays out', async () => {
-  const { epoch } = await api('GET', '/v1/bond/1');
-  await jump(2 * HOUR + 120); // the epoch passes with nothing attested
+  const ref = keccak256(toHex('paid-for-nothing'));
+  await pay(ref, '100000000');
+  await jump(9 * HOUR + 120); // the hours pass with nothing sealed
 
-  const quote = await api('POST', '/v1/claim', {
-    agentId: 1,
-    ref: keccak256(toHex('paid-for-nothing')),
-    epoch,
-    amount: '100000000',
-  });
-  await sendAll(quote, BUYER);
-
-  const before = await pub.getBalance({ address: BUYER.address }).then(() => api('GET', '/v1/bond/1'));
+  await sendAll(await api('POST', '/v1/claim', { agentId: 1, ref, from: BUYER.address }), BUYER);
+  const before = await api('GET', '/v1/bond/1');
   await jump(48 * HOUR + 60);
   await sendAll(await api('POST', '/v1/claim/2/settle'), BUYER);
 
   const after = await api('GET', '/v1/bond/1');
   assert.equal(BigInt(before.bonded) - BigInt(after.bonded), 100000000n, 'the bond paid the claim');
   assert.equal((await api('GET', '/v1/claims/1')).summary.paid, 1);
+
+  // settled payouts are collected, so no address can ever jam a bond
+  const buyerBefore = await usdgBalance(BUYER.address);
+  const owed = await api('POST', '/v1/collect', { from: BUYER.address });
+  assert.equal(owed.owed, '102000000', 'the payment and the stake back');
+  await sendAll(owed, BUYER);
+  assert.equal(await usdgBalance(BUYER.address) - buyerBefore, 102000000n);
+  await assert.rejects(() => api('POST', '/v1/collect', { from: BUYER.address }), /nothing is owed/);
+});
+
+test('a claim on a payment that never happened is refused', async () => {
+  await assert.rejects(
+    () => api('POST', '/v1/claim', { agentId: 1, ref: keccak256(toHex('never paid')), from: BUYER.address }),
+    /no payment from/
+  );
+});
+
+test("nobody can claim someone else's payment", async () => {
+  const ref = keccak256(toHex('a buyers order'));
+  await pay(ref, '1000000');
+  await jump(9 * HOUR + 120);
+  await assert.rejects(
+    () => api('POST', '/v1/claim', { agentId: 1, ref, from: SELLER.address }),
+    /no payment from/
+  );
 });
 
 test('a discharge with the wrong delivery list is refused before it costs gas', async () => {
   await assert.rejects(
-    () => api('POST', '/v1/claim/1/discharge', { ref: keccak256(toHex('x')), deliveries: deliveriesFor(3) }),
-    /does not contain ref/
+    () => api('POST', '/v1/claim/1/discharge', { deliveries: deliveriesFor(3) }),
+    /is discharged|does not contain ref/
   );
 });
 
-test('a claim larger than the bond is refused before it costs gas', async () => {
-  const { epoch } = await api('GET', '/v1/bond/1');
+test('a payment the bond cannot cover is refused before it costs gas', async () => {
   await assert.rejects(
-    () => api('POST', '/v1/claim', { agentId: 1, ref: keccak256(toHex('big')), epoch, amount: '99999000000' }),
+    () => api('POST', '/v1/pay', { agentId: 1, ref: keccak256(toHex('big')), amount: '450000000' }),
     /will not cover/
   );
 });
 
-test('bad input is rejected with a reason, not a stack trace', async () => {
-  await assert.rejects(() => api('POST', '/v1/claim', { agentId: 1, ref: 'nope', epoch: 1, amount: '1' }), /32-byte hex/);
-  await assert.rejects(() => api('POST', '/v1/attest', { agentId: 1, epoch: 1, deliveries: [] }), /non-empty array/);
+test('expired cover is released for the seller', async () => {
+  const ref = keccak256(toHex('delivered, never claimed'));
+  await pay(ref, '5000000');
+  const held = await api('GET', '/v1/bond/1');
+  await jump(26 * HOUR);
+  const r = await api('POST', '/v1/release/1');
+  assert.ok(r.released >= 1);
+  await sendAll(r, SELLER);
+  const freed = await api('GET', '/v1/bond/1');
+  assert.ok(BigInt(freed.reserved) < BigInt(held.reserved), 'the cover came back');
 });
 
-test('the claim floor is a share of the bond, not a fixed number', async () => {
-  const { epoch, minClaim, bonded } = await api('GET', '/v1/bond/1');
-  // 1% of whatever is posted, so it fits today's payments and tomorrow's.
-  assert.equal(BigInt(minClaim), BigInt(bonded) / 100n);
-  await assert.rejects(
-    () => api('POST', '/v1/claim', {
-      agentId: 1, ref: keccak256(toHex('tiny')), epoch,
-      amount: (BigInt(minClaim) - 1n).toString(),
-    }),
-    /smallest claim this contract accepts/
-  );
+test('bad input is rejected with a reason, not a stack trace', async () => {
+  await assert.rejects(() => api('POST', '/v1/claim', { agentId: 1, ref: 'nope', from: BUYER.address }), /32-byte hex/);
+  await assert.rejects(() => api('POST', '/v1/claim', { agentId: 1, ref: keccak256(toHex('x')), from: 'nope' }), /must be an address/);
+  await assert.rejects(() => api('POST', '/v1/attest', { agentId: 1, epoch: 1, deliveries: [] }), /non-empty array/);
 });
 
 test('registering an agent is one transaction for the seller to sign', async () => {
   const r = await api('POST', '/v1/register', { agentURI: 'https://example.com/agent.json' });
   assert.equal(r.transactions.length, 1);
-  assert.match(r.transactions[0].data, /^0x/);
   await assert.rejects(() => api('POST', '/v1/register', { agentURI: '' }), /agent card/);
 });

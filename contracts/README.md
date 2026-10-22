@@ -96,8 +96,8 @@ forge test
 forge test --match-path 'test/*.invariant.t.sol'
 ```
 
-**Deployed on Robinhood Chain (4663): `0xD5e4643e7E20c987a3da124b05a54cae57de9DDA`**, block 94996670, source verified
-(exact match) on [Sourcify](https://repo.sourcify.dev/4663/0xD5e4643e7E20c987a3da124b05a54cae57de9DDA). `script/Deploy.s.sol` is the script that deployed
+**Deployed on Robinhood Chain (4663): `0x41f3836260D04fa156D3ef2a4Ab7e5C1dEe0F95e`**, block 95120145, source verified
+(exact match) on [Sourcify](https://repo.sourcify.dev/4663/0x41f3836260D04fa156D3ef2a4Ab7e5C1dEe0F95e). `script/Deploy.s.sol` is the script that deployed
 it; `script/Testnet.s.sol` rehearses the same thing on testnet 46630.
 
 ## Repo

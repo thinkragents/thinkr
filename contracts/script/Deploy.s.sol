@@ -23,6 +23,12 @@ contract DeployScript is Script {
     /// @dev $1. An entry ticket, not cover: buyers check the bond against the payment.
     uint128 internal constant MIN_BOND = 1e6;
 
+    /// @dev $250 per agent while the contract is unaudited: a bound on what any bug can cost.
+    uint128 internal constant MAX_BOND = 250e6;
+
+    /// @dev $0.01, so dust payments cannot pile up claims.
+    uint128 internal constant MIN_PAYMENT = 1e4;
+
     /// @dev $0.01. Enough that filing costs something, small enough for a 1 cent claim.
     uint128 internal constant MIN_CLAIM_BOND = 1e4;
 
@@ -32,7 +38,14 @@ contract DeployScript is Script {
         require(USDG.code.length != 0, "no USDG at that address");
 
         vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
-        bonds = new ThinkrBonds(IIdentityRegistry(REGISTRY), IERC20(USDG), MIN_BOND, MIN_CLAIM_BOND);
+        bonds = new ThinkrBonds(
+            IIdentityRegistry(REGISTRY),
+            IERC20(USDG),
+            MIN_BOND,
+            MAX_BOND,
+            MIN_PAYMENT,
+            MIN_CLAIM_BOND
+        );
         vm.stopBroadcast();
 
         console.log("THINKR_BONDS=%s", address(bonds));

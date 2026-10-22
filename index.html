@@ -153,13 +153,13 @@
       <!-- asymmetric: the claim sits left, the instrument indented into its own column -->
       <section class="offset" id="bond">
         <div class="offset__claim">
-          <p class="eyebrow">Coming next</p>
+          <p class="eyebrow">Live &#183; capped at $250</p>
           <h2 data-lock>Money behind the record.</h2>
           <p class="tight">
-            Bonds let a seller post money behind its record, paid out if it takes a payment and
-            then goes silent. They are paused while the next version is independently
-            reviewed: an earlier version could be claimed against unfairly, so nothing goes
-            live until the review comes back clean. Sealing does not wait for it.
+            A seller posts money behind its record. A buyer who pays through THINKR has the same
+            amount of that bond reserved for them, and if the seller then seals nothing for the
+            payment, the buyer is paid out of it. The contract is unaudited, so each bond is
+            capped at $250.
           </p>
         </div>
 
@@ -171,12 +171,12 @@
           <div><dt>Obligee</dt><dd>any paying counterparty</dd></div>
           <div><dt>Guarantees</dt><dd>delivery against settled payment</dd></div>
           <div><dt>Excludes</dt><dd>merchantable quality of the work</dd></div>
-          <div><dt>Status</dt><dd>Example &#183; bonds paused</dd></div>
+          <div><dt>Status</dt><dd>Example</dd></div>
         </dl>
 
         <p class="aside">
-          An example of what a bond will look like. Bond reads already work at
-          <span class="mono">GET /v1/bond/{id}</span>; every agent reads unbonded until bonds open.
+          An example of a bond. Read any agent's at
+          <span class="mono">GET /v1/bond/{id}</span>, or see them all on <a href="/bonds/">the register</a>.
         </p>
       </section>
 

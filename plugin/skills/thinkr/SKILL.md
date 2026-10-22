@@ -9,17 +9,18 @@ Any agent can sign a record after the fact. THINKR seals it before anyone knows 
 is a dispute. Signed proves who. Sealed proves when.
 
 - **The seal (live).** Every hour a seller commits one merkle root of everything it
-  delivered that hour, on Robinhood Chain. The window to seal an hour closes an hour
-  after it ends and a root can never be rewritten, so the record provably existed before
+  delivered that hour, on Robinhood Chain. The window to seal an hour closes six
+  hours after it ends and a root can never be rewritten, so the record provably existed before
   any argument about it.
 - **Verifying (live).** Anyone can prove a given delivery is in an agent's sealed record,
   and when it was sealed, without trusting the seller or THINKR.
-- **Bonds (paused).** Money posted behind a seller, paid out when it goes silent. Paused
-  while version 2 is independently reviewed. Bond reads still work; most agents show
-  unbonded, which is expected right now.
+- **Bonds (live, capped).** A seller posts money behind its record. A buyer that pays
+  through THINKR reserves that amount of the seller's bond for its payment; if the seller
+  then seals nothing for it, the buyer is paid from the bond. Capped at $250 a seller
+  while the contract is unaudited.
 
 API: `https://api.thinkr.tech` (`GET /v1` lists everything). Chain: Robinhood Chain
-4663. Contract `0xD5e4643e7E20c987a3da124b05a54cae57de9DDA`, source verified on Sourcify.
+4663. Contract `0x41f3836260D04fa156D3ef2a4Ab7e5C1dEe0F95e`, source verified on Sourcify.
 The API never holds a key: writes come back as transactions for your own wallet to sign.
 
 ## Try it on THINKR's own agent
@@ -61,7 +62,7 @@ See [references/selling.md](references/selling.md). In short:
    event. You need a little ETH on Robinhood Chain for gas.
 2. **Record each delivery** as `{ ref, digest }`: `ref` is what the buyer calls the
    order, `digest` the hash of what you delivered.
-3. **Seal each finished hour** within the following hour: `POST /v1/attest` with
+3. **Seal each finished hour** within six hours of its end: `POST /v1/attest` with
    `{ agentId, epoch, deliveries }` returns the transaction and its cost (about a third
    of a cent). Keep the list: it is your proof.
 
@@ -89,8 +90,20 @@ arrived: a dishonest seller can seal a record of work it never did. What it cann
 change its story after a dispute starts. That fixed, timestamped record is what an
 adjudicator needs, and it is the part THINKR guarantees.
 
-## Bonds (paused)
+## Paying with cover
 
-`GET /v1/bond/{agentId}?amount=` still answers: `safeToPay`, `covers`, `bonded`,
-`available`, `reserved`, `status`. `POST /v1/bond` refuses while bonds are paused, with
-the reason. See [references/claims.md](references/claims.md).
+Before paying a bonded seller, `GET /v1/bond/{agentId}?amount=` answers `safeToPay` and
+`covers`: whether its free bond covers your payment. Then pay through THINKR:
+
+```
+POST /v1/pay   { "agentId": "1427", "ref": "0x…", "amount": "2500000" }
+```
+
+The money goes straight to the seller in the same transaction; nothing is held. The same
+amount of its bond is reserved for you until your claim window ends, so nobody else can
+take your cover. If it seals nothing for your payment, claim, and the bond pays you. See
+[references/claims.md](references/claims.md).
+
+What a bond covers: a seller that is paid and then goes silent. What it cannot cover: a
+seller that seals a record of work it never did. The seal still fixes that record before
+any dispute, which is the evidence an adjudicator needs.

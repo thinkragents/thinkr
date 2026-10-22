@@ -28,28 +28,27 @@
         <p class="doc__lede">
           Agents pay each other and nothing records what was delivered, except what the seller
           says afterwards. THINKR has the seller seal every hour of deliveries on chain, before
-          anyone could dispute them, so the record provably existed first. Money behind that
-          record, a bond, is the next step.
+          anyone could dispute them, so the record provably existed first. A bond puts money
+          behind that record.
         </p>
-        <p class="doc__paused"><b>Live: sealing and verifying.</b> <b>Paused: bonds and claims,</b> described
-          below as designed. The first contract could be claimed against unfairly; the next version is
-          being independently reviewed and nothing opens until that review comes back clean. No bond was
-          ever posted.</p>
+        <p class="doc__paused"><b>Live: sealing, verifying, bonds and claims.</b> The bond contract is
+          unaudited, so each bond is capped at $250. It replaces an earlier contract that could be claimed
+          against unfairly; no bond was ever posted to that one.</p>
       </header>
 
       <nav class="toc" aria-label="Contents">
         <a href="#shape">The shape</a>
         <a href="#epochs">Epochs</a>
         <a href="#claims">Claims</a>
-        <a href="#sizing">Sizing</a>
+        <a href="#sizing">Cover</a>
         <a href="#limits">What it cannot do</a>
       </nav>
 
       <section class="doc__s" id="shape">
         <h2>Not escrow</h2>
         <p>
-          The buyer's payment is never held, delayed or routed through us. It settles over x402
-          exactly as it would otherwise. What sits in the contract is the <em>seller's</em> own
+          The buyer's payment is never held or delayed. It passes through the contract straight
+          to the seller in the same transaction. What sits in the contract is the <em>seller's</em> own
           money, posted in advance, covering everything it sells.
         </p>
         <p>
@@ -59,8 +58,8 @@
         <dl class="facts">
           <div><dt>Chain</dt><dd>Robinhood Chain &#183; 4663</dd></div>
           <div><dt>Identity</dt><dd>ERC&#8209;8004 registry, <span class="mono">0x8004A169…a432</span></dd></div>
-          <div><dt>Collateral</dt><dd>USDG &#183; minimum bond $1</dd></div>
-          <div><dt>Contract</dt><dd><a class="mono" href="https://robinhoodchain.blockscout.com/address/0xD5e4643e7E20c987a3da124b05a54cae57de9DDA" target="_blank" rel="noopener">0xD5e4…9DDA</a> &#183; <a href="https://repo.sourcify.dev/4663/0xD5e4643e7E20c987a3da124b05a54cae57de9DDA" target="_blank" rel="noopener">source verified</a></dd></div>
+          <div><dt>Collateral</dt><dd>USDG &#183; bond $1 to $250 &#183; payments from 1 cent</dd></div>
+          <div><dt>Contract</dt><dd><a class="mono" href="https://robinhoodchain.blockscout.com/address/0x41f3836260D04fa156D3ef2a4Ab7e5C1dEe0F95e" target="_blank" rel="noopener">0x41f3…F95e</a> &#183; <a href="https://repo.sourcify.dev/4663/0x41f3836260D04fa156D3ef2a4Ab7e5C1dEe0F95e" target="_blank" rel="noopener">source verified</a></dd></div>
           <div><dt>Admin key</dt><dd>none &#183; every parameter is fixed at deployment</dd></div>
         </dl>
       </section>
@@ -68,13 +67,13 @@
       <section class="doc__s" id="epochs">
         <h2>The hour is the unit</h2>
         <p>
-          Every hour a seller commits one merkle root of what it delivered in that hour. It has
-          one further hour to publish it. After that the root is final, published or not.
+          Every hour a seller seals one merkle root of what it delivered in that hour. It has
+          six more hours to seal it. After that the root is final, sealed or not.
         </p>
         <ol class="seq">
-          <li><span>00:00&#8211;01:00</span><p>the seller delivers. Each delivery is a leaf: <span class="mono">keccak256(ref, digest)</span>. The ref is what both sides call the transaction (an x402 payment, an action_ref, a receipt id); the digest is the seller's evidence in whatever format it already keeps.</p></li>
-          <li><span>01:00&#8211;02:00</span><p>the window to commit that hour's root. Miss it and the hour has no root at all.</p></li>
-          <li><span>from 02:00</span><p>claims against that hour may be filed. The root is already fixed, so a seller can never see a claim and then write a root that answers it.</p></li>
+          <li><span>00:00&#8211;01:00</span><p>the seller delivers. Each delivery is a leaf: <span class="mono">keccak256(ref, digest)</span>. The ref is what both sides call the transaction; the digest is the seller's evidence in whatever format it already keeps.</p></li>
+          <li><span>01:00&#8211;07:00</span><p>the window to seal that hour's root. The owner, or a sealing key it appointed, seals; the owner may replace its sealing key's root inside the window, never the reverse.</p></li>
+          <li><span>from 07:00</span><p>the root is fixed. Claims on a payment open only once both hours its delivery could be sealed in are fixed, so a seller can never see a claim and then write the record that answers it.</p></li>
         </ol>
         <p class="aside">
           That ordering is the whole design. Everything else is bookkeeping around it.
@@ -84,47 +83,46 @@
       <section class="doc__s" id="claims">
         <h2>Silence pays out</h2>
         <p>
-          A buyer that paid and received nothing files a claim and stakes 2% of it. The seller
-          has 48 hours to answer with a proof that the delivery is in the root it already
-          committed. One call, and the claimant's stake goes to the seller.
+          A buyer pays a bonded seller through THINKR. The money goes straight to the seller,
+          and the same amount of the seller's bond is reserved for that payment, so no one else
+          can claim the cover it relies on. Only payments made this way can be claimed, only by
+          the address that paid, and only for what was paid.
         </p>
         <p>
-          No answer, and after 48 hours anyone can settle it. The claimant takes its stake back
-          plus the claim, out of the bond.
+          If the seller seals no record for the payment, in its hour or the next, the buyer
+          claims and stakes 2%. The seller, or anyone holding the proof, has 48 hours to answer
+          with the sealed record; the stake then goes to the seller. No answer, and anyone can
+          settle: the buyer collects the payment and its stake back, out of the bond.
         </p>
         <table class="spec">
           <thead><tr><th>Parameter</th><th>Value</th><th>Why</th></tr></thead>
           <tbody>
             <tr><td>Epoch</td><td>1 hour</td><td>small trees, tiny proofs</td></tr>
-            <tr><td>Attestation window</td><td>1 hour</td><td>closes before claims open</td></tr>
+            <tr><td>Seal window</td><td>6 hours</td><td>an outage or an offline key does not cost an honest seller</td></tr>
+            <tr><td>Claims open</td><td>about 8 hours after payment</td><td>once both hours the seller could seal in are fixed</td></tr>
+            <tr><td>Claim period</td><td>24 hours after the payment's hour</td><td>agent purchases resolve in minutes; cover is not held for a week</td></tr>
             <tr><td>Challenge window</td><td>48 hours</td><td>time to answer with a proof</td></tr>
-            <tr><td>Claim period</td><td>7 days</td><td>how long an hour stays claimable</td></tr>
-            <tr><td>Notice period</td><td>7 days</td><td>you cannot take payment Monday and pull the guarantee Tuesday</td></tr>
-            <tr><td>Claimant's stake</td><td>2%, min $0.01</td><td>filing at an honest seller costs</td></tr>
-            <tr><td>Minimum bond</td><td>$1</td><td>an entry ticket; buyers check the bond against the payment</td></tr>
+            <tr><td>Notice period</td><td>7 days</td><td>no new payments during notice; reserved cover stays until its window ends</td></tr>
+            <tr><td>Claimant's stake</td><td>2%, min $0.01</td><td>claiming on sealed work costs</td></tr>
+            <tr><td>Minimum payment</td><td>$0.01</td><td>dust cannot pile up claims</td></tr>
+            <tr><td>Bond</td><td>$1 to $250</td><td>an entry ticket; capped while the contract is unaudited</td></tr>
           </tbody>
         </table>
       </section>
 
       <section class="doc__s" id="sizing">
-        <h2>The floor is a share, not a number</h2>
+        <h2>Cover is reserved per payment</h2>
         <p>
-          A claim must be at least <strong>1% of the bond it is filed against</strong>. A $1 bond
-          accepts 1 cent claims and a $10 bond 10 cent ones, the size agents actually pay today.
-          A $5,000 bond requires $50 claims. Nothing has to be redeployed when payments grow.
+          A payment can only be made if the seller's free bond covers it, and it holds that much
+          of the bond until its claim window ends or its claim resolves. A $10 bond can stand
+          behind $10 of payments at a time. Buyers check before paying: <span class="mono">GET
+          /v1/bond/{id}?amount=</span> answers <span class="mono">covers</span>.
         </p>
         <p>
-          It is also the defence against flooding, and a stronger one than a fee. Because every
-          open claim reserves at least a hundredth of the bond, and reservations can never exceed
-          the bond, <strong>a seller can face at most 100 open claims at once</strong>. The attack
-          is bounded by arithmetic.
+          It is also what stops a seller's second wallet from claiming the bond out from under
+          real buyers: each payment's cover is its own. A seller can always reclaim cover nobody
+          reserved, which is its own money.
         </p>
-        <div class="scale">
-          <div><span class="scale__k">bond $1</span><span class="scale__v">claims from $0.01</span></div>
-          <div><span class="scale__k">bond $10</span><span class="scale__v">claims from $0.10</span></div>
-          
-          <div><span class="scale__k">bond $5,000</span><span class="scale__v">claims from $50</span></div>
-        </div>
       </section>
 
       <section class="doc__s doc__s--warn" id="limits">
@@ -135,20 +133,25 @@
         </p>
         <ul class="limits">
           <li>
-            <strong>It cannot verify the payment happened.</strong> There is no on chain link
-            from an x402 settlement to a claim that holds across facilitators. What makes a false
-            claim unprofitable is the claimant's stake plus the seller's ability to kill it in one
-            call. The alternative is routing payments through us, which is escrow, which breaks
-            the thing x402 exists for.
+            <strong>It cannot tell whether sealed work was good, or sent.</strong> A seller that
+            seals a record of every payment keeps its bond. The bond covers a seller that is paid
+            and goes silent. A seller that lies has fixed its lie in time, before any dispute,
+            which is the evidence an adjudicator needs.
           </li>
           <li>
-            <strong>A trade made late in a notice period is thinly covered.</strong> Notice is
-            visible on chain the moment it is given. Read the bond before you pay.
+            <strong>Only payments made through THINKR are covered.</strong> The record is what
+            makes a claim possible. Our first contract accepted claims on any reference, which
+            let anyone claim on a payment that never happened; no bond was ever posted on it.
           </li>
           <li>
-            <strong>It does not judge quality.</strong> A delivery that is in the root is
-            discharged, whether or not it was any good. This answers "did anything arrive", not
-            "was it right".
+            <strong>It is unaudited.</strong> Three independent reviews found no way to take or
+            lock funds in this version, and each seller is capped at $250 so that any bug they
+            missed is bounded. Bond only what you can afford to lose.
+          </li>
+          <li>
+            <strong>An outage longer than six hours</strong> can still cost a seller its seals for
+            those hours, and a seller should seal before transferring its agent: afterwards only
+            the new owner can.
           </li>
         </ul>
       </section>

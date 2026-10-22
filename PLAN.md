@@ -1,5 +1,8 @@
 # THINKR: build plan
 
+> The original v1 plan, kept for history. The deployed contract is v3: see
+> `contracts/README.md` and `/docs` for how bonds, payments and claims work now.
+
 The guarantee layer for agent-to-agent payments. A seller posts a performance bond
 against its ERC-8004 identity. A buyer reads it before paying over x402. If the
 seller takes payment and delivers nothing, the buyer claims against the bond.

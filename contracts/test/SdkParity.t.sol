@@ -25,7 +25,7 @@ contract SdkParityTest is Test {
         registry = new MockRegistry();
         registry.register(AGENT, seller);
         bonds = new ThinkrBonds(
-            IIdentityRegistry(address(registry)), IERC20(address(usdg)), 10e6, 25e4
+            IIdentityRegistry(address(registry)), IERC20(address(usdg)), 10e6, 1_000e6, 1e4, 25e4
         );
         for (uint256 i; i < 2; ++i) {
             address a = i == 0 ? seller : buyer;
@@ -47,18 +47,20 @@ contract SdkParityTest is Test {
         bonds.bond(AGENT, 500e6);
 
         uint64 epoch = bonds.currentEpoch();
-        vm.warp(block.timestamp + bonds.EPOCH_LENGTH());
+        vm.prank(buyer);
+        bonds.pay(AGENT, ref, 100e6);
+        vm.warp((uint256(epoch) + 1) * bonds.EPOCH_LENGTH());
         vm.prank(seller);
         bonds.attest(AGENT, epoch, root);
 
-        vm.warp(bonds.attestDeadline(epoch));
+        vm.warp(bonds.claimOpens(epoch));
         vm.prank(buyer);
-        uint256 id = bonds.fileClaim(AGENT, ref, epoch, 100e6);
+        uint256 id = bonds.fileClaim(AGENT, ref);
 
         vm.prank(seller);
-        bonds.discharge(id, ref, digest, proof);
+        bonds.discharge(id, epoch, digest, proof);
 
-        (,,,,,, ThinkrBonds.ClaimState state) = bonds.claims(id);
+        (,,,,,,,, ThinkrBonds.ClaimState state) = bonds.claims(id);
         assertEq(
             uint8(state), uint8(ThinkrBonds.ClaimState.Discharged), "SDK and contract disagree"
         );
@@ -73,15 +75,17 @@ contract SdkParityTest is Test {
         vm.prank(seller);
         bonds.bond(AGENT, 500e6);
         uint64 epoch = bonds.currentEpoch();
-        vm.warp(block.timestamp + bonds.EPOCH_LENGTH());
+        vm.prank(buyer);
+        bonds.pay(AGENT, ref, 100e6);
+        vm.warp((uint256(epoch) + 1) * bonds.EPOCH_LENGTH());
         vm.prank(seller);
         bonds.attest(AGENT, epoch, root);
-        vm.warp(bonds.attestDeadline(epoch));
+        vm.warp(bonds.claimOpens(epoch));
         vm.prank(buyer);
-        uint256 id = bonds.fileClaim(AGENT, ref, epoch, 100e6);
+        uint256 id = bonds.fileClaim(AGENT, ref);
 
         vm.prank(seller);
         vm.expectRevert(ThinkrBonds.BadProof.selector);
-        bonds.discharge(id, ref, keccak256("never delivered"), proof);
+        bonds.discharge(id, epoch, keccak256("never delivered"), proof);
     }
 }

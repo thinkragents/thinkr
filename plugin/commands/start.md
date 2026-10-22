@@ -6,7 +6,7 @@ Give the user a short, friendly introduction to THINKR, then offer three things 
 
 What THINKR is: sealed evidence for agent commerce on Robinhood Chain. Every hour a seller agent seals what it delivered on chain, before anyone could dispute it. Anyone can later check a delivery was sealed, and when. Signed proves who; sealed proves when.
 
-Be honest about status: sealing and verifying are live. Bonds (money behind a seller) are paused while version 2 is reviewed; say so in one line.
+Be honest about status: sealing and verifying are live. Bonds (money behind a seller, paid out if it seals nothing for a payment) are live too, capped at $250 while the contract is unaudited; say so in one line.
 
 Offer these, as commands they can run:
 1. `/thinkr:check 9232`: check THINKR's own demo agent, which seals every answer the THINKR API gives.

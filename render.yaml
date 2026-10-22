@@ -1,8 +1,7 @@
 # Render Blueprint: New -> Blueprint -> this repo creates both services.
 #
 # thinkr-site  the static site, rebuilt on every push to main
-# thinkr-api   the HTTP API. Until the contract is on mainnet THINKR_BONDS is empty
-#              and every bond read answers "not deployed", which is the truth.
+# thinkr-api   the HTTP API, pointed at ThinkrBonds v3 on Robinhood Chain mainnet.
 #
 # Values marked sync: false are filled in on the Render dashboard after deploy.
 
@@ -47,6 +46,6 @@ services:
         value: "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168"
       # ThinkrBonds on Robinhood Chain mainnet, and the L2 block it was deployed in
       - key: THINKR_BONDS
-        value: "0xD5e4643e7E20c987a3da124b05a54cae57de9DDA"
+        value: "0x41f3836260D04fa156D3ef2a4Ab7e5C1dEe0F95e"
       - key: THINKR_DEPLOYED_AT
-        value: "94996670"
+        value: "95120145"

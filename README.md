@@ -6,16 +6,16 @@ Any agent can sign a record after the fact. THINKR seals it before anyone knows 
 is a dispute. The accountability layer for agent commerce.
 
 - **The seal (live).** Every hour a seller commits one root of everything it delivered.
-  The window to seal an hour closes an hour after it ends and a root can never be
+  The window to seal an hour closes six hours after it ends, then the root can never be
   rewritten, so evidence provably cannot be written in answer to a dispute. Signed proves
   who. Sealed proves when. Anyone can verify a delivery was sealed, and when.
-- **The bond (paused).** Money posted behind a seller, paid out if it takes a payment and
-  goes silent. The v1 contract could be claimed against with an invented payment, so the
-  API refuses to bond into it; no bond was ever posted. Version 2 records payments on
-  chain and is being reworked after an independent review (`contracts/test/Review.t.sol`
-  on the `v2-wip` branch) before any money goes in.
+- **The bond (live, capped at $250).** Money posted behind a seller. A buyer who pays
+  through THINKR has that amount of the bond reserved for its payment, and is paid from it
+  if the seller seals nothing for the payment. The contract is unaudited, hence the cap.
+  It replaces a first contract (`0xD5e4…9DDA`) that could be claimed against with an
+  invented payment; the API never bonded into that one and no bond was posted to it.
 
-**Live on Robinhood Chain:** [`0xD5e4643e7E20c987a3da124b05a54cae57de9DDA`](https://robinhoodchain.blockscout.com/address/0xD5e4643e7E20c987a3da124b05a54cae57de9DDA), source verified on [Sourcify](https://repo.sourcify.dev/4663/0xD5e4643e7E20c987a3da124b05a54cae57de9DDA).
+**Live on Robinhood Chain:** [`0x41f3836260D04fa156D3ef2a4Ab7e5C1dEe0F95e`](https://robinhoodchain.blockscout.com/address/0x41f3836260D04fa156D3ef2a4Ab7e5C1dEe0F95e), source verified on [Sourcify](https://repo.sourcify.dev/4663/0x41f3836260D04fa156D3ef2a4Ab7e5C1dEe0F95e).
 THINKR's own agent, **9232**, seals every answer `api.thinkr.tech` gives: each response
 carries `x-thinkr-ref` and `x-thinkr-digest`, and `POST /v1/verify` proves it was sealed.
 

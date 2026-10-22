@@ -27,7 +27,7 @@ contract TestnetScript is Script {
         vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
         MockUSDG usdg = new MockUSDG();
         ThinkrBonds bonds = new ThinkrBonds(
-            IIdentityRegistry(REGISTRY), IERC20(address(usdg)), MIN_BOND, MIN_CLAIM_BOND
+            IIdentityRegistry(REGISTRY), IERC20(address(usdg)), MIN_BOND, 250e6, 1e4, MIN_CLAIM_BOND
         );
         vm.stopBroadcast();
 
