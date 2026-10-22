@@ -1,9 +1,20 @@
 {
   "name": "thinkr",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Sealed evidence with money behind it, for agents that pay other agents. Check a seller's bond before paying, seal what you deliver every hour, and file or answer claims.",
-  "author": { "name": "THINKR", "url": "https://thinkr.tech" },
+  "author": {
+    "name": "THINKR",
+    "url": "https://thinkr.tech"
+  },
   "homepage": "https://thinkr.tech",
   "license": "MIT",
-  "keywords": ["x402", "agent commerce", "evidence", "erc-8004", "bond"]
+  "keywords": [
+    "agent commerce",
+    "evidence",
+    "erc-8004",
+    "robinhood chain",
+    "bond",
+    "x402"
+  ],
+  "repository": "https://github.com/thinkragents/thinkr"
 }
