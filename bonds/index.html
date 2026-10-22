@@ -3,8 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>THINKR · Bond an agent</title>
-    <meta name="description" content="Post a bond from $1 of USDG against your agent, seal what it delivers every hour, and see every bonded agent, read from the chain." />
+    <title>THINKR · Seal your agent</title>
+    <meta name="description" content="Seal what your agent delivers every hour on Robinhood Chain, so the record existed before any dispute. About a third of a cent an hour." />
     <meta name="theme-color" content="#0a0d09" />
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
@@ -24,33 +24,36 @@
     <main class="page reg">
       <!-- ============ HOW ============ -->
       <section class="reg__intro">
-        <p class="reg__paused"><b>Bonding is paused.</b> We found that in the first contract a claim
-          on a payment that never happened cannot be answered, so a bond could be claimed by anyone.
-          Version 2 records every payment on chain, so only real payments can be claimed. Until it
-          ships, the API will not build a bond. Nothing anyone holds is affected; no bond was ever posted.</p>
-        <p class="eyebrow">Bond an agent</p>
-        <h1>Put money behind your word.</h1>
+        <p class="eyebrow">Seal your agent</p>
+        <h1>Evidence before the argument.</h1>
         <p class="lede">
-          Post a bond from $1 of USDG against your agent's ERC&#8209;8004 identity. Buyers check it
-          against what they are about to pay. Seal what you deliver every hour, and any claim
-          against you is answered by the record you already made.
+          Every hour, seal what your agent delivered. One write on Robinhood Chain, about a third
+          of a cent, and from then on nobody, you included, can change it. When a buyer disputes
+          a delivery, the record was already there.
         </p>
       </section>
 
       <section class="reg__how">
         <div class="split">
           <ol class="run split__text">
-            <li><em>i</em> Register your agent in the ERC&#8209;8004 registry on Robinhood Chain, if it is not already.</li>
-            <li><em>ii</em> Post a bond, from $1. With the skill, ask your agent to bond itself. Or call the API: it returns the two transactions for your own wallet to sign, and never holds a key.</li>
-            <li><em>iii</em> Seal every hour you deliver. One write, about a third of a cent. The skill does it for you.</li>
-            <li><em>iv</em> Answer any claim with the record you sealed. Silence pays the claim out of your bond.</li>
+            <li><em>i</em> Get an agent id in the ERC&#8209;8004 registry on Robinhood Chain. One transaction, if you have none.</li>
+            <li><em>ii</em> For every delivery keep a ref (what the buyer calls the order) and a digest of what you sent. Give both to the buyer.</li>
+            <li><em>iii</em> When an hour ends, seal its deliveries within the next hour. The skill does it for you, or call the API: it returns the transaction for your own wallet, with its cost, and never holds a key.</li>
+            <li><em>iv</em> Anyone can then prove a delivery was sealed, and when. THINKR's own agent, 9232, seals every answer this API gives.</li>
           </ol>
           <div class="split__side">
             <div class="code">
-              <p class="code__k">Bond agent 1427 with $10 of USDG</p>
-              <pre><code>curl -X POST https://api.thinkr.tech/v1/bond \
+              <p class="code__k">Seal an hour of deliveries</p>
+              <pre><code>curl -X POST https://api.thinkr.tech/v1/attest \
   -H 'content-type: application/json' \
-  -d '{"agentId":"1427","amount":"10000000"}'</code></pre>
+  -d '{"agentId":"1427","epoch":497965,
+       "deliveries":[{"ref":"0x…","digest":"0x…"}]}'</code></pre>
+            </div>
+            <div class="code">
+              <p class="code__k">No agent id yet</p>
+              <pre><code>curl -X POST https://api.thinkr.tech/v1/register \
+  -H 'content-type: application/json' \
+  -d '{"agentURI":"https://your.site/agent.json"}'</code></pre>
             </div>
             <div class="code">
               <p class="code__k">Or install the skill and ask your agent</p>
@@ -63,9 +66,13 @@
       <!-- ============ REGISTER ============ -->
       <section class="reg__list" aria-live="polite">
         <div class="reg__listhead">
-          <h2>The register</h2>
+          <h2>Bonds</h2>
           <p class="reg__src" id="src">Source: <span class="mono">loading</span></p>
         </div>
+        <p class="reg__paused"><b>Bonds are paused.</b> A bond puts money behind a seller, paid out if
+          it takes a payment and goes silent. The first contract could be claimed against unfairly
+          and the next version is being independently reviewed; nothing opens until that review comes
+          back clean. No bond was ever posted, so nobody lost anything. Bond reads still work.</p>
         <p class="reg__sub">
           Every agent ever bonded, read from the contract on Robinhood Chain. We keep no copy,
           so there is nothing here we could quietly edit.

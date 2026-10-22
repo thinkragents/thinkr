@@ -9,7 +9,7 @@ import { encodeFunctionData, formatEther, getAddress, maxUint256 } from 'viem';
 import { client } from './chain.js';
 import { bondsAbi, erc20Abi, registryAbi } from './abi.js';
 import { ADDRESSES, CHAIN, requireBonds } from './config.js';
-import { build, leaf, proof } from '../../contracts/sdk/tree.js';
+import { build, leaf, proof, verify as verifyProof } from '../../contracts/sdk/tree.js';
 
 const CLAIM_STATE = ['none', 'open', 'discharged', 'settled'];
 
@@ -141,6 +141,101 @@ export async function listBonds({ limit = 100 } = {}) {
   );
   all.sort((a, b) => (BigInt(b.bonded) > BigInt(a.bonded) ? 1 : BigInt(b.bonded) < BigInt(a.bonded) ? -1 : 0));
   return { count: all.length, bonds: all };
+}
+
+/**
+ * An agent's sealing record: how many hours it has sealed, when it started and when
+ * it last did. Sealing is the habit that makes its evidence worth anything, so this
+ * is the first thing to read about a seller.
+ */
+export async function getSeals(rawAgentId) {
+  const id = agentId(rawAgentId);
+  const bonds = requireBonds();
+  const [events, now] = await Promise.all([
+    eventsSince(ADDRESSES.deployedAt, { address: bonds, abi: bondsAbi, eventName: 'Attested', args: { agentId: id } }),
+    client.readContract({ address: bonds, abi: bondsAbi, functionName: 'currentEpoch' }),
+  ]);
+  const epochs = events.map((e) => Number(e.args.epoch)).sort((a, b) => a - b);
+  const current = Number(now);
+  const within = (h) => epochs.filter((e) => e >= current - h).length;
+  return {
+    agentId: id.toString(),
+    hoursSealed: epochs.length,
+    firstSealed: epochs.length ? epochs[0] : null,
+    lastSealed: epochs.length ? epochs[epochs.length - 1] : null,
+    last24h: within(24),
+    last7d: within(24 * 7),
+    epoch: current,
+    recent: events.slice(-24).map((e) => ({ epoch: Number(e.args.epoch), root: e.args.root, block: Number(e.blockNumber) })),
+  };
+}
+
+/** Network totals for the site: hours sealed and how many agents seal. */
+export async function getStats() {
+  const bonds = requireBonds();
+  const events = await eventsSince(ADDRESSES.deployedAt, { address: bonds, abi: bondsAbi, eventName: 'Attested' });
+  return {
+    hoursSealed: events.length,
+    agentsSealing: new Set(events.map((e) => e.args.agentId.toString())).size,
+  };
+}
+
+/**
+ * Was this delivery sealed, and when? Send the agent, the hour, the ref and digest, and
+ * either the proof or the full list that was sealed. Anyone can check this: it is the
+ * evidence THINKR exists to make, and it does not depend on trusting the seller or us.
+ */
+export async function verifySeal({ agentId: raw, epoch, ref, digest, proof: prf, deliveries: list }) {
+  const id = agentId(raw);
+  if (epoch === undefined || epoch === null) throw new BadRequest('epoch is required');
+  const r = hash32(ref, 'ref');
+  const d = hash32(digest, 'digest');
+  const bonds = requireBonds();
+  const target = leaf(r, d);
+
+  let path = prf;
+  if (!path && list) {
+    const tree = build(deliveries(list).map((x) => leaf(x.ref, x.digest)));
+    if (!tree.layers[0].includes(target)) throw new BadRequest('that delivery is not in the list you sent');
+    path = proof(tree, target);
+  }
+  if (!Array.isArray(path)) throw new BadRequest('send the proof, or the deliveries that were sealed');
+  path = path.map((p, i) => hash32(p, `proof[${i}]`));
+
+  const root = await client.readContract({ address: bonds, abi: bondsAbi, functionName: 'roots', args: [id, BigInt(epoch)] });
+  if (root === `0x${'0'.repeat(64)}`) return { sealed: false, reason: `agent ${id} sealed nothing for hour ${epoch}` };
+  const sealed = verifyProof(path, root, target);
+  let sealedAt = null;
+  if (sealed) {
+    const [e] = await eventsSince(ADDRESSES.deployedAt, { address: bonds, abi: bondsAbi, eventName: 'Attested', args: { agentId: id, epoch: BigInt(epoch) } });
+    if (e) sealedAt = Number((await client.getBlock({ blockNumber: e.blockNumber })).timestamp);
+  }
+  return {
+    sealed,
+    agentId: id.toString(),
+    epoch: Number(epoch),
+    hourStarted: new Date(Number(epoch) * 3600 * 1000).toISOString(),
+    root,
+    ...(sealedAt ? { sealedAt: new Date(sealedAt * 1000).toISOString() } : {}),
+    ...(sealed ? {} : { reason: 'the proof does not lead to the root sealed for that hour' }),
+  };
+}
+
+/**
+ * Register an agent in the ERC-8004 identity registry on Robinhood Chain, for sellers
+ * that do not have an agent id yet. The new id is in the Transfer event of the receipt.
+ */
+export async function buildRegister({ agentURI }) {
+  if (typeof agentURI !== 'string' || agentURI.length === 0 || agentURI.length > 2048) {
+    throw new BadRequest('agentURI is a link to your agent card (JSON describing your agent)');
+  }
+  return {
+    registry: ADDRESSES.registry,
+    note: 'Your agent id is the tokenId in the Transfer event of the receipt. The wallet that sends this owns the agent.',
+    transactions: [
+      tx(ADDRESSES.registry, encodeFunctionData({ abi: registryAbi, functionName: 'register', args: [agentURI] }), 'register your agent'),
+    ],
+  };
 }
 
 /** Claim history for one agent, straight from the logs. */

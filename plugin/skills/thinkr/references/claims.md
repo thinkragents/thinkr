@@ -1,64 +1,30 @@
-# Claims
+# Bonds and claims (paused)
 
-A claim says one thing: a transaction settled and the seller holds no sealed record
-of delivering it.
+Bonds put money behind a seller: if it goes silent after being paid, the buyer is paid
+from its bond. They are paused.
 
-## Timing
+## Why
 
-Deliveries are sealed by the hour. Epoch `n` covers the hour starting at
-`n * 3600` seconds. A claim against an hour can be filed from two hours after that
-hour starts (once its seal is final) until seven days after it ends.
+The first contract let anyone claim on any reference. A claim on a payment that never
+happened could not be answered, because there is no delivery to prove, so it paid out
+against honest sellers. No bond was ever posted, so nobody lost anything. The API refuses
+to build a bond into that contract.
 
-```
-epoch = floor(paymentUnixSeconds / 3600)
-```
+The next version records each payment on chain and only accepts claims on recorded
+payments, from the address that paid. An independent review of it found further ways a
+seller or a griefer could abuse bonds, so it is being reworked and reviewed again before
+any money goes into it.
 
-`GET /v1/bond/{agentId}` returns the current `epoch`. A claim filed too early is
-refused, and the API says so before anything is signed.
+## What still works
 
-## Filing
+- `GET /v1/bond/{agentId}?amount=` reads any agent's bond: `safeToPay`, `covers`,
+  `bonded`, `available`, `reserved`, `status`. Most agents are unbonded; that is
+  expected while bonds are paused.
+- Sealing and verifying, which never involve money. See `selling.md`.
 
-```
-POST /v1/claim
-{
-  "agentId": "1427",
-  "ref":     "0x…",      // 32 bytes: the x402 payment reference, action_ref or receipt id
-  "epoch":   491230,
-  "amount":  "2500000"   // whole token units, at least the seller's minClaim
-}
-```
+## What a bond will and will not cover
 
-The response quotes your stake before anything is signed, then gives two
-transactions to send in order: approve the stake, then file.
-
-```json
-{
-  "stake": "1000000",
-  "stakeNote": "You lose this if the seller proves it delivered. …",
-  "transactions": [ { "to": "0x…", "data": "0x…", "note": "approve your stake" },
-                    { "to": "0x…", "data": "0x…", "note": "file the claim" } ]
-}
-```
-
-One claim per ref per seller. The claim reserves its amount out of the bond, so the
-seller cannot withdraw while it is open.
-
-## What happens next
-
-- **The seller answers** within 48 hours with a proof that the ref was in the root
-  it sealed for that hour. The claim closes and your stake goes to the seller.
-- **The seller stays silent.** After 48 hours anyone can settle:
-
-```
-POST /v1/claim/{claimId}/settle
-```
-
-You receive the claim amount from the bond plus your stake back.
-
-`GET /v1/claim/{claimId}` shows where a claim stands.
-
-## In practice
-
-Claims are cheap to file and cheap to answer. An honest seller answers in one call
-from records it already sealed. A seller that cannot produce one did not deliver,
-and no judgement is needed to establish that.
+A bond pays out when a seller is paid and then does not seal a record of the delivery.
+It cannot tell whether sealed work was any good, or even sent: a seller that seals a
+record of work it never did keeps its bond. The seal still fixes that claim in time,
+before any dispute, which is what an adjudicator needs.

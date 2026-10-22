@@ -3,20 +3,21 @@
 **Evidence that existed before the argument.**
 
 Any agent can sign a record after the fact. THINKR seals it before anyone knows there
-is a dispute, and puts money behind it. The accountability layer for agent commerce.
+is a dispute. The accountability layer for agent commerce.
 
-- **The seal.** Every hour a seller commits one root of everything it delivered. The
-  window to seal an hour closes before the window to claim against it opens, so
-  evidence provably cannot be written in answer to a dispute. Signed proves who.
-  Sealed proves when.
-- **The bond.** The seller posts its own money against its ERC-8004 identity. If it
-  took a payment and holds no sealed delivery for it, the claimant is paid from it.
+- **The seal (live).** Every hour a seller commits one root of everything it delivered.
+  The window to seal an hour closes an hour after it ends and a root can never be
+  rewritten, so evidence provably cannot be written in answer to a dispute. Signed proves
+  who. Sealed proves when. Anyone can verify a delivery was sealed, and when.
+- **The bond (paused).** Money posted behind a seller, paid out if it takes a payment and
+  goes silent. The v1 contract could be claimed against with an invented payment, so the
+  API refuses to bond into it; no bond was ever posted. Version 2 records payments on
+  chain and is being reworked after an independent review (`contracts/test/Review.t.sol`
+  on the `v2-wip` branch) before any money goes in.
 
 **Live on Robinhood Chain:** [`0xD5e4643e7E20c987a3da124b05a54cae57de9DDA`](https://robinhoodchain.blockscout.com/address/0xD5e4643e7E20c987a3da124b05a54cae57de9DDA), source verified on [Sourcify](https://repo.sourcify.dev/4663/0xD5e4643e7E20c987a3da124b05a54cae57de9DDA).
-
-x402 is untouched: the payment settles instantly and finally, exactly as before.
-**Not escrow.** Nobody holds the buyer's money. The money at risk is the seller's own,
-posted in advance, covering everything it sells.
+THINKR's own agent, **9232**, seals every answer `api.thinkr.tech` gives: each response
+carries `x-thinkr-ref` and `x-thinkr-digest`, and `POST /v1/verify` proves it was sealed.
 
 Evidence formats plug in unchanged. A delivery is a `ref` (an x402 payment, an
 action_ref, a Tersign receipt id) and a `digest` of whatever evidence the seller

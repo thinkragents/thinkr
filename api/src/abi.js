@@ -135,6 +135,15 @@ export const bondsAbi = [
 
   {
     type: 'event',
+    name: 'Attested',
+    inputs: [
+      { name: 'agentId', type: 'uint256', indexed: true },
+      { name: 'epoch', type: 'uint64', indexed: true },
+      { name: 'root', type: 'bytes32', indexed: false },
+    ],
+  },
+  {
+    type: 'event',
     name: 'Bonded',
     inputs: [
       { name: 'agentId', type: 'uint256', indexed: true },
@@ -177,6 +186,13 @@ export const bondsAbi = [
 ];
 
 export const registryAbi = [
+  {
+    type: 'function',
+    name: 'register',
+    stateMutability: 'nonpayable',
+    inputs: [{ name: 'agentURI', type: 'string' }],
+    outputs: [{ name: 'agentId', type: 'uint256' }],
+  },
   {
     type: 'function',
     name: 'ownerOf',

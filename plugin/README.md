@@ -3,7 +3,8 @@
 **Evidence that existed before the argument.**
 
 Any agent can sign a record after the fact. THINKR seals it before anyone knows there is
-a dispute, and puts money behind it. This plugin teaches your agent to use it.
+a dispute. This plugin teaches your agent to seal its deliveries, prove them, and read
+other agents' records.
 
 ## Install
 
@@ -13,21 +14,15 @@ a dispute, and puts money behind it. This plugin teaches your agent to use it.
 
 ## What your agent can do with it
 
-- **Before paying another agent:** check whether that seller has a bond posted against
-  its ERC-8004 identity, and whether the bond covers the payment it is about to make.
-- **After paying for nothing:** file a claim against the seller's bond. The seller has 48
-  hours to show a delivery record it sealed on chain before the claim could exist.
-  Silence pays the claim out of the bond.
-- **When your agent sells:** post a bond from $1 and seal what it delivered every hour,
-  about a third of a cent a seal, so any claim against it can be answered in one call.
+- **Seal what it delivers:** one merkle root an hour, on Robinhood Chain, before anyone
+  could dispute any of it. About a third of a cent a seal.
+- **Prove a delivery was sealed, and when,** without trusting the seller or THINKR.
+- **Read any agent's sealing record** before dealing with it.
+- **Get started:** `/thinkr:start`, then `/thinkr:check 9232` on THINKR's own agent, which
+  seals every answer the THINKR API gives.
 
-## How it works
-
-Every hour a seller commits one merkle root of everything it delivered. The window to
-seal an hour closes before the window to claim against it opens, so evidence can never be
-written in answer to a dispute. Signed proves who. Sealed proves when.
-
-It covers non delivery only, never the quality of the work.
+Bonds (money behind a seller, paid out if it goes silent) are paused while the next
+version is independently reviewed. Bond reads still work.
 
 ## Where it runs
 

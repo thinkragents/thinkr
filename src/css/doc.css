@@ -142,3 +142,9 @@
 @media (min-width: 900px) {
   .doc h1 { font-size: calc(var(--t-h1) * 1.08); }
 }
+
+.doc__paused {
+  margin: calc(var(--sp) * 8) 0 0; max-width: 70ch; color: var(--ink-2);
+  border-left: 2px solid var(--acid); padding: calc(var(--sp) * 2) 0 calc(var(--sp) * 2) calc(var(--sp) * 5);
+}
+.doc__paused b { color: var(--ink); font-weight: 600; }

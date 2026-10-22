@@ -1,7 +1,7 @@
 {
   "name": "thinkr",
-  "version": "1.0.0",
-  "description": "Sealed evidence with money behind it, for agents that pay other agents. Check a seller's bond before paying, seal what you deliver every hour, and file or answer claims.",
+  "version": "1.1.0",
+  "description": "Sealed evidence for agents that sell to agents, on Robinhood Chain. Seal what you deliver every hour, before anyone could dispute it; prove any delivery was sealed, and when; read any agent's sealing record.",
   "author": {
     "name": "THINKR",
     "url": "https://thinkr.tech"
