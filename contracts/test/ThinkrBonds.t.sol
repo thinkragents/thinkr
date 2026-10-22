@@ -350,7 +350,7 @@ contract ThinkrBondsTest is Test {
 
         uint256 before = usdg.balanceOf(buyer);
         vm.prank(buyer);
-        bonds.collect();
+        bonds.collect(buyer);
         assertEq(usdg.balanceOf(buyer), before + 60 * ONE + (60 * ONE * 2) / 100, "paid in full");
     }
 
@@ -419,7 +419,8 @@ contract ThinkrBondsTest is Test {
         bonds.discharge(id, epoch, DIGEST, proof);
         assertEq(uint8(_state(id)), uint8(ThinkrBonds.ClaimState.Discharged));
         assertEq(_reserved(), 0);
-        assertEq(_amount(), 502 * ONE, "the stake goes to the seller's bond");
+        assertEq(_amount(), 500 * ONE, "the bond is untouched");
+        assertEq(bonds.owed(seller), 2 * ONE, "the stake is the seller's to collect");
     }
 
     function test_discharge_with_a_seal_from_the_hour_after() public {
@@ -457,15 +458,91 @@ contract ThinkrBondsTest is Test {
         bonds.discharge(id, epoch, DIGEST, proof);
     }
 
-    function test_discharge_by_a_stranger_fails() public {
+    /// @notice Review 2, F1: a valid proof is valid whoever sends it, so a seller's defence
+    ///         never depends on one key being online. The stake still goes to the seller.
+    function test_anyone_can_submit_a_valid_proof() public {
         _bond(500 * ONE);
         _pay(buyer, REF, 100 * ONE);
         (uint64 epoch, bytes32[] memory proof) = _sealNow(REF, DIGEST);
         _openClaims(epoch);
         uint256 id = _claim(buyer, REF);
         vm.prank(stranger);
-        vm.expectRevert(ThinkrBonds.NotTheSeller.selector);
         bonds.discharge(id, epoch, DIGEST, proof);
+        assertEq(uint8(_state(id)), uint8(ThinkrBonds.ClaimState.Discharged));
+        assertEq(bonds.owed(seller), 2 * ONE);
+        assertEq(bonds.owed(stranger), 0);
+    }
+
+    /// @notice Review 2, F1: a seller that is offline for five hours after the hour ends
+    ///         can still seal it.
+    function test_a_seal_five_hours_late_still_counts() public {
+        _bond(500 * ONE);
+        uint64 epoch = _pay(buyer, REF, 100 * ONE);
+        vm.warp((uint256(epoch) + 1) * bonds.EPOCH_LENGTH() + 5 hours);
+        vm.prank(seller);
+        bonds.attest(AGENT, epoch, Merkle.leaf(REF, DIGEST));
+        _openClaims(epoch);
+        uint256 id = _claim(buyer, REF);
+        bonds.discharge(id, epoch, DIGEST, new bytes32[](0));
+        assertEq(uint8(_state(id)), uint8(ThinkrBonds.ClaimState.Discharged));
+    }
+
+    /// @notice Review 2, F1: an appointed sealer seals; after a transfer it no longer can.
+    function test_an_appointed_sealer_seals_until_the_agent_changes_hands() public {
+        address sealerKey = makeAddr("sealerKey");
+        vm.prank(seller);
+        bonds.setSealer(AGENT, sealerKey);
+        uint64 epoch = bonds.currentEpoch();
+        vm.warp((uint256(epoch) + 1) * bonds.EPOCH_LENGTH());
+        vm.prank(sealerKey);
+        bonds.attest(AGENT, epoch, keccak256("root"));
+        assertEq(bonds.roots(AGENT, epoch), keccak256("root"));
+
+        registry.register(AGENT, stranger); // transferred
+        vm.warp(block.timestamp + bonds.EPOCH_LENGTH());
+        vm.prank(sealerKey);
+        vm.expectRevert(ThinkrBonds.NotASealer.selector);
+        bonds.attest(AGENT, epoch + 1, keccak256("root"));
+    }
+
+    function test_only_the_owner_appoints_a_sealer() public {
+        vm.prank(stranger);
+        vm.expectRevert(ThinkrBonds.NotAgentOwner.selector);
+        bonds.setSealer(AGENT, stranger);
+    }
+
+    /// @notice Review 2, F2: an empty root seals nothing, so it is refused outright.
+    function test_an_empty_root_is_refused() public {
+        uint64 epoch = bonds.currentEpoch();
+        vm.warp((uint256(epoch) + 1) * bonds.EPOCH_LENGTH());
+        vm.prank(seller);
+        vm.expectRevert(ThinkrBonds.EmptyRoot.selector);
+        bonds.attest(AGENT, epoch, bytes32(0));
+    }
+
+    /// @notice Review 2, F5: an agent owned by this contract can be neither paid nor bonded.
+    function test_an_agent_owned_by_this_contract_is_refused() public {
+        _bond(100 * ONE);
+        registry.register(AGENT, address(bonds));
+        vm.prank(buyer);
+        vm.expectRevert(ThinkrBonds.SellerIsThisContract.selector);
+        bonds.pay(AGENT, REF, 1 * ONE);
+        vm.prank(backer);
+        vm.expectRevert(ThinkrBonds.SellerIsThisContract.selector);
+        bonds.bond(AGENT, 1 * ONE);
+    }
+
+    /// @notice Review 2, F4: a payout can be sent anywhere the owed account says.
+    function test_a_payout_can_be_collected_to_another_address() public {
+        _bond(100 * ONE);
+        uint64 epoch = _pay(buyer, REF, 10 * ONE);
+        _openClaims(epoch);
+        uint256 id = _claim(buyer, REF);
+        vm.warp(block.timestamp + bonds.CHALLENGE_WINDOW());
+        bonds.settle(id);
+        vm.prank(buyer);
+        bonds.collect(backer);
+        assertEq(usdg.balanceOf(backer), 10_000 * ONE + 10 * ONE + (10 * ONE * 2) / 100);
     }
 
     /// @notice Review R9: the seller that was paid, and sealed honestly, can still answer
@@ -522,11 +599,11 @@ contract ThinkrBondsTest is Test {
         assertEq(_reserved(), 0);
         uint256 before = usdg.balanceOf(buyer);
         vm.prank(buyer);
-        bonds.collect();
+        bonds.collect(buyer);
         assertEq(usdg.balanceOf(buyer), before + 102 * ONE);
         vm.prank(buyer);
         vm.expectRevert(ThinkrBonds.NothingOwed.selector);
-        bonds.collect();
+        bonds.collect(buyer);
     }
 
     function test_settle_before_the_window_closes_reverts() public {
@@ -567,9 +644,10 @@ contract ThinkrBondsTest is Test {
         bonds.discharge(answered, epoch, DIGEST, proof);
         vm.warp(block.timestamp + bonds.CHALLENGE_WINDOW());
         bonds.settle(silent);
-        assertEq(_amount(), 500 * ONE + 2 * ONE - 50 * ONE);
+        assertEq(_amount(), 500 * ONE - 50 * ONE);
         assertEq(_reserved(), 0);
         assertEq(bonds.owed(buyer), 50 * ONE + 1 * ONE);
+        assertEq(bonds.owed(seller), 2 * ONE);
     }
 
     // --------------------------------------------------------------- fuzz

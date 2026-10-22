@@ -110,7 +110,7 @@ contract Handler is Test {
     function collect(uint256 seed) external {
         address who = seed % 4 == 3 ? attacker : owners[seed % owners.length];
         vm.prank(who);
-        try bonds.collect() {} catch {}
+        try bonds.collect(who) {} catch {}
     }
 
     /// @dev Someone who never paid tries to claim, on invented refs and on refs it has
@@ -273,7 +273,7 @@ contract SolvencyInvariantTest is Test {
         handler.pay(0, 1, 30e6, 2);
         handler.skipAhead(61 minutes); // the hour ends; its seal window is open
         handler.seal(0, keccak256("d"));
-        handler.skipAhead(2 hours); // both roots final: claims open
+        handler.skipAhead(13 hours); // both roots final (six hour seal window): claims open
         handler.fileClaim(0);
         handler.fileClaim(1);
         handler.discharge(0, keccak256("d"));
