@@ -1,0 +1,8 @@
+/* Linked from the page head so styles land before first paint. Imported from
+   JavaScript they arrived after it, and the bare page showed for a moment. */
+@import '@fontsource-variable/space-grotesk/index.css';
+@import '@fontsource/lekton/400.css';
+@import '@fontsource/lekton/700.css';
+@import './tokens.css';
+@import './base.css';
+@import './site.css';

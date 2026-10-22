@@ -1,0 +1,9 @@
+{
+  "name": "@thinkr/mcp",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "THINKR as MCP tools. One config line and any agent can check a bond before it pays.",
+  "bin": { "thinkr-mcp": "src/stdio.js" },
+  "scripts": { "start": "node src/stdio.js", "test": "node --test" },
+  "dependencies": { "@modelcontextprotocol/sdk": "^1.12.0", "zod": "^3.23.0" }
+}

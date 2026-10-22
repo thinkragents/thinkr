@@ -1,0 +1,9 @@
+{
+  "name": "@thinkr/tree",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "The delivery tree. Must agree with ThinkrBonds.sol byte for byte.",
+  "main": "tree.js",
+  "scripts": { "test": "node --test" },
+  "dependencies": { "@noble/hashes": "^1.5.0" }
+}

@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>THINKR · Sealed Evidence</title>
+    <meta name="description" content="A Claude skill for agent commerce. Any agent can sign a record after the fact. THINKR seals it before anyone knows there is a dispute, and puts money behind it." />
+    <meta name="theme-color" content="#0a0d09" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://thinkr.tech/" />
+    <meta property="og:title" content="THINKR: evidence that existed before the argument" />
+    <meta property="og:description" content="A Claude skill for agent commerce on Robinhood Chain. Any agent can sign a record after the fact. THINKR seals it before anyone knows there is a dispute, and puts money behind it." />
+    <meta property="og:image" content="https://thinkr.tech/favicon-512.png" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:image" content="https://thinkr.tech/favicon-512.png" />
+    <link rel="stylesheet" href="/src/css/page-home.css" />
+    <script>
+      (function(){var d=document.documentElement;
+        if('scrollRestoration' in history) history.scrollRestoration='manual';
+        if(matchMedia('(prefers-reduced-motion: reduce)').matches) d.classList.add('reduced');})();
+    </script>
+  </head>
+
+  <body>
+    <canvas class="scene" id="scene" aria-hidden="true"></canvas>
+
+
+    <header class="nav" id="nav"></header>
+
+    <main class="page">
+
+      <!-- ============ HERO ============ -->
+      <section class="hero">
+        <p class="eyebrow">The accountability layer for agent commerce</p>
+
+          <h1 data-lock>Evidence that existed before the argument.</h1>
+
+        <p class="lede">
+          Any agent can sign a record after the fact. THINKR seals it before anyone
+            knows there is a dispute, and puts money behind it.
+          </p>
+
+          <div class="count">
+            <span class="count__n" data-count="9104">0</span>
+            <span class="count__k">agents registered on Robinhood Chain</span>
+            <span class="count__n count__n--null">0</span>
+            <span class="count__k">with evidence sealed before a dispute</span>
+          </div>
+      </section>
+
+      <!-- ============ MARK ============ -->
+      <!-- the brand, straight after the statement it signs -->
+      <section class="stamp">
+        <figure class="stamp__mark" aria-hidden="true">
+          <video src="/hero.mp4" muted loop playsinline autoplay preload="metadata"
+                 disablepictureinpicture disableremoteplayback
+                 width="960" height="960"></video>
+        </figure>
+        <p class="stamp__line">
+          Signed proves who.<br />Sealed proves when.
+        </p>
+      </section>
+
+      <!-- ============ SKILL ============ -->
+      <!-- what it is, on the second screen: a skill you add to your agent -->
+      <section class="wire" id="skill">
+        <div class="split">
+        <div class="split__text">
+        <p class="eyebrow skill-mark">
+          <img src="/claude-mark.svg" alt="" width="28" height="28" />
+          <span>A Claude skill</span>
+        </p>
+        <h2 data-lock>Add it to your agent in one line.</h2>
+        <p class="wire__lede">
+          THINKR ships as a Claude skill. Once installed, your agent checks a seller's bond
+          before it pays, seals what it delivers every hour, and files or answers claims
+          on its own. It works in Claude Code and in any agent that reads skills.
+        </p>
+        </div>
+        <div class="split__side">
+        <div class="code">
+          <p class="code__k">Claude Code</p>
+          <pre><code>/plugin install thinkr --marketplace thinkragents/thinkr</code></pre>
+        </div>
+        </div>
+        </div>
+      </section>
+
+      <!-- ============ PROBLEM ============ -->
+      <!-- full bleed. the diagram is the section, the words are a caption -->
+      <section class="bleed" id="problem">
+        <figure class="flow" aria-label="A buyer agent pays a seller agent over x402 and nothing returns">
+          <svg viewBox="0 0 1200 150" role="img" preserveAspectRatio="xMidYMid meet">
+            <text x="40" y="52" class="lbl">BUYER</text>
+            <text x="40" y="72" class="sub">agent</text>
+            <line class="w" x1="140" y1="46" x2="470" y2="46"/>
+            <path class="w" d="M464 41 L474 46 L464 51"/>
+            <text x="186" y="34" class="tag">x402 · consideration paid, final</text>
+            <text x="500" y="52" class="lbl">SELLER</text>
+            <text x="500" y="72" class="sub">agent</text>
+            <line class="w w--dash" x1="596" y1="100" x2="266" y2="100"/>
+            <text x="272" y="122" class="tag tag--null">delivery · not guaranteed</text>
+            <line class="w w--hair" x1="760" y1="46" x2="1160" y2="46"/>
+            <text x="760" y="34" class="tag tag--null">remedy available</text>
+            <text x="760" y="78" class="lbl lbl--null">NONE</text>
+          </svg>
+          <figcaption>
+            Settlement is instant and final. Delivery is a promise with nothing standing
+            behind it.
+          </figcaption>
+        </figure>
+      </section>
+
+      <!-- ============ THE LINE ============ -->
+      <!-- one sentence, nothing else on the screen -->
+      <section class="line">
+        <p data-lock>Every plumber is bonded and insured. No AI agent is.</p>
+      </section>
+
+      <!-- ============ BOND ============ -->
+      <!-- asymmetric: the claim sits left, the instrument indented into its own column -->
+      <section class="offset" id="bond">
+        <div class="offset__claim">
+          <h2 data-lock>A guarantee you can read before you pay.</h2>
+          <p class="tight">
+            The seller posts a performance bond against its registry identity. x402 is
+            untouched. Settlement stays instant. The guarantee sits beside it, lodged in
+            advance and readable by any counterparty.
+          </p>
+        </div>
+
+        <dl class="instrument">
+          <div><dt>Instrument</dt><dd>Performance bond</dd></div>
+          <div><dt>Ref</dt><dd>TKR&#8209;0001</dd></div>
+          <div class="instrument--big"><dt>Amount</dt><dd><b>10.00</b> USDG</dd></div>
+          <div><dt>Principal</dt><dd>agent 1427 &#183; Robinhood Chain 4663</dd></div>
+          <div><dt>Obligee</dt><dd>any paying counterparty</dd></div>
+          <div><dt>Guarantees</dt><dd>delivery against settled payment</dd></div>
+          <div><dt>Excludes</dt><dd>merchantable quality of the work</dd></div>
+          <div><dt>Status</dt><dd class="live">Active &#183; 41 days</dd></div>
+        </dl>
+
+        <p class="aside">
+          The amount is a statement, not insurance. A seller that is not legitimate will not
+          risk even a few dollars against a record that pays out. Buyers check it against what
+          they are about to pay.
+        </p>
+      </section>
+
+      <!-- ============ PROOF ============ -->
+      <!-- the tree runs off the right edge -->
+      <section class="proof" id="proof">
+        <h2 class="proof__h" data-lock>Sealed before anyone can argue.</h2>
+
+        <figure class="tree" aria-label="A delivery tree with one receipt absent">
+          <svg viewBox="0 0 820 210" role="img" preserveAspectRatio="xMinYMid meet">
+            <path class="br" d="M360 30 L170 92 M360 30 L550 92
+                                M170 92 L80 156 M170 92 L260 156
+                                M550 92 L460 156"/>
+            <path class="br br--gone" d="M550 92 L640 156"/>
+            <circle class="nd" cx="360" cy="30" r="4"/><text x="360" y="16" class="nl">root</text>
+            <circle class="nd" cx="170" cy="92" r="3"/>
+            <circle class="nd" cx="550" cy="92" r="3"/>
+            <circle class="nd" cx="80"  cy="156" r="3"/><text x="80"  y="178" class="nl">4471</text>
+            <circle class="nd" cx="260" cy="156" r="3"/><text x="260" y="178" class="nl">4472</text>
+            <circle class="nd" cx="460" cy="156" r="3"/><text x="460" y="178" class="nl">4473</text>
+            <g class="gone">
+              <path d="M634 150 L646 162 M646 150 L634 162"/>
+              <text x="640" y="178" class="nl">4474</text>
+              <text x="640" y="196" class="nl nl--null">your payment</text>
+            </g>
+          </svg>
+        </figure>
+
+        <div class="split">
+        <p class="wide split__text">
+          Every hour the seller seals one root covering everything it delivered. One write,
+          not one per call. The window to seal an hour closes before the window to claim
+          against it opens, so evidence can never be written in answer to a dispute.
+        </p>
+
+        <ol class="run split__side">
+          <li><em>i</em> You paid. The settlement is on chain.</li>
+          <li><em>ii</em> You claim against the bond, naming the payment.</li>
+          <li><em>iii</em> The seller answers with the receipt it sealed before you claimed.</li>
+          <li><em>iv</em> Silence pays the claim out of the bond.</li>
+        </ol>
+        </div>
+      </section>
+
+      <!-- ============ WAYS ============ -->
+      <!-- one column per reader, ruled, no cards -->
+      <section class="ways" id="use">
+        <h2 data-lock>Two ways to use it.</h2>
+        <div class="ways__cols">
+          <div class="ways__col">
+            <p class="eyebrow">If your agent sells</p>
+            <ol class="run">
+              <li><em>i</em> Post a bond. From $1 in USDG, refundable after seven days' notice.</li>
+              <li><em>ii</em> Seal every hour. One write, about a third of a cent.</li>
+              <li><em>iii</em> Answer any claim with the record you already sealed.</li>
+            </ol>
+          </div>
+          <div class="ways__col">
+            <p class="eyebrow">If your agent buys</p>
+            <ol class="run">
+              <li><em>i</em> Check the bond against the payment, before you pay.</li>
+              <li><em>ii</em> Nothing arrived? Claim, with a 2% stake.</li>
+              <li><em>iii</em> No sealed record in 48 hours, and the bond pays you.</li>
+            </ol>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ SCOPE ============ -->
+      <!-- type only. no label, no diagram, nothing else on the screen -->
+      <section class="say">
+        <p data-lock>The bond guarantees delivery, not quality.</p>
+        <p class="say__after">
+          Whether the work was any good is not something a contract can settle. Narrow on
+          purpose: non delivery is the only part that can be made mechanical, so it is
+          the only part underwritten.
+        </p>
+      </section>
+
+      <!-- ============ INTEGRATE ============ -->
+      <section class="wire" id="integrate">
+        <div class="split">
+        <div class="split__text">
+        <h2 data-lock>Wire it into any agent.</h2>
+
+        <p class="wire__lede">
+          One read before the money moves. The same operations are available as a Claude
+          skill, an MCP server and a paid x402 endpoint.
+        </p>
+
+        <dl class="where">
+          <div>
+            <dt>Source</dt>
+            <dd><a href="https://github.com/thinkragents/thinkr">github.com/thinkragents/thinkr</a></dd>
+            <dd class="where__note">Contracts, SDK and the MCP server. Public from the first commit.</dd>
+          </div>
+          <div>
+            <dt>Skill</dt>
+            <dd><a href="#skill">Claude skill</a></dd>
+            <dd class="where__note">One line in Claude Code. Also listed for Bankr agents.</dd>
+          </div>
+          <div>
+            <dt>Identity</dt>
+            <dd>ERC&#8209;8004 &#183; Robinhood Chain 4663</dd>
+            <dd class="where__note">Agents resolve the registry directly, no directory needed.</dd>
+          </div>
+        </dl>
+        </div>
+        <div class="split__side">
+        <div class="code">
+          <p class="code__k">MCP &#183; one line in your agent config</p>
+          <pre><code>{
+  "mcpServers": {
+    "thinkr": { "url": "https://mcp.thinkr.tech" }
+  }
+}</code></pre>
+        </div>
+
+        <div class="code">
+          <p class="code__k">read a bond before paying, for this payment</p>
+          <pre><code>GET https://api.thinkr.tech/v1/bond/1427?amount=250000
+
+{ "bonded": "10000000", "available": "10000000",
+  "status": "active", "covers": true, "claimable": true,
+  "safeToPay": true,
+  "chain": { "id": 4663, "name": "Robinhood Chain" } }</code></pre>
+        </div>
+        </div>
+        </div>
+      </section>
+
+      <!-- ============ REGISTER ============ -->
+      <!-- edge to edge, ignores the gutter -->
+      <section class="register" id="register">
+        <div class="register__head">
+          <h2 data-lock>No agent is bonded yet.</h2>
+          <a class="act act--solid" href="#register">Be the first</a>
+        </div>
+        <div class="ledger">
+          <div class="ledger__head"><span>Ref</span><span>Agent</span><span>Guarantee</span><span>Claims</span><span>Status</span></div>
+          <div class="ledger__rule"></div>
+          <p class="ledger__none">Published from the first day rather than filled with examples.</p>
+        </div>
+      </section>
+
+    </main>
+
+    <footer class="foot">
+      <span class="mark"><img src="/logo.png" alt="THINKR" width="1812" height="261" /></span>
+      <span>The accountability layer for agent commerce</span>
+      <span>Experimental &#183; the contract is unaudited and cannot be changed &#183; bonded USDG is at risk</span>
+    </footer>
+
+    <script type="module" src="/src/js/main.js"></script>
+  </body>
+</html>

@@ -1,0 +1,14 @@
+{
+  "name": "@thinkr/api",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Reads bonds off the chain and builds the calldata to change them. Holds no keys.",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@noble/hashes": "^1.5.0",
+    "viem": "^2.21.0"
+  }
+}

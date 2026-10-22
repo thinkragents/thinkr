@@ -1,0 +1,473 @@
+/* ===========================================================
+   THINKR, page.
+   Rule: no containers. Structure comes from alignment, hairline
+   rules and space. Nothing is boxed, nothing is carded.
+   =========================================================== */
+
+.scene {
+  position: fixed; inset: 0; width: 100vw; height: 100svh;
+  z-index: var(--z-scene); pointer-events: none;
+}
+/* the scene is a backdrop, never a competitor: hold it down so the
+   page reads as black paper with one light source behind it */
+/* the scrim sits between the scene and the page, never over it */
+body::before {
+  content: "";
+  position: fixed; inset: 0; z-index: 1; pointer-events: none;
+  background:
+    linear-gradient(to top, var(--bg) 0%, color-mix(in oklab, var(--bg) 62%, transparent) 30%, transparent 64%),
+    linear-gradient(to right, var(--bg) 0%, color-mix(in oklab, var(--bg) 72%, transparent) 34%, color-mix(in oklab, var(--bg) 30%, transparent) 100%);
+}
+
+/* --- nav ---------------------------------------------------- */
+.nav {
+  position: fixed; top: 0; left: 0; right: 0; height: var(--nav-h);
+  z-index: var(--z-nav);
+  display: flex; align-items: center; gap: calc(var(--sp) * 11);
+  padding-inline: var(--gutter);
+  border-bottom: var(--rule) solid transparent;
+  transition: background var(--t-med) var(--ease), border-color var(--t-med) var(--ease);
+}
+.nav[data-stuck="1"] {
+  background: color-mix(in oklab, var(--bg) 84%, transparent);
+  backdrop-filter: blur(10px); border-bottom-color: var(--line);
+}
+/* the real wordmark, not type imitating it */
+.mark { display: block; line-height: 0; }
+.mark img { width: auto; height: 15px; display: block; }
+.nav__links { display: none; gap: 26px; margin-left: 26px; }
+@media (min-width: 860px) { .nav__links { display: flex; } }
+.nav__links a {
+  font-family: var(--f-mono); font-size: var(--t-mono);
+  letter-spacing: var(--tr-mono); text-transform: uppercase; color: var(--ink-4);
+  transition: var(--tx) var(--t-fast) var(--ease);
+}
+.nav__links a:hover { color: var(--ink); }
+
+.act {
+  margin-left: auto; white-space: nowrap;
+  font-family: var(--f-mono); font-size: var(--t-mono);
+  letter-spacing: var(--tr-mono); text-transform: uppercase;
+  color: var(--acid);
+  padding-bottom: 3px;
+  border-bottom: var(--rule) solid var(--acid-dim);
+  transition: var(--tx) var(--t-fast) var(--ease);
+}
+.act:hover { border-bottom-color: var(--acid); }
+.act--solid { margin: 0; display: inline-block; }
+
+/* --- page --------------------------------------------------- */
+.page { position: relative; z-index: var(--z-page); }
+.band, .hero { padding: var(--bay) var(--gutter); border-top: var(--rule) solid var(--line); }
+.band { background: color-mix(in oklab, var(--bg) 93%, transparent); }
+.band--tight { padding-block: calc(var(--bay) * 0.62); }
+
+/* --- hero: type left, the mark as an object on the right ----- */
+.hero {
+  min-height: 100svh;
+  border-top: 0;
+  padding: calc(var(--nav-h) + var(--bay)) var(--gutter) var(--bay);
+  display: grid; gap: calc(var(--sp) * 10);
+  grid-template-columns: 1fr;
+  align-content: center;
+}
+@media (min-width: 980px) {
+  /* the statement runs the full width; the lede and the figures sit
+     under it as a pair, so the right half carries weight too */
+  .hero { grid-template-columns: var(--col-6) 1fr; column-gap: var(--col-1); }
+  .hero > .eyebrow, .hero > h1 { grid-column: 1 / -1; }
+  .hero > .count { align-self: end; justify-self: end; width: 100%; }
+}
+.hero__mark video { width: 100%; height: auto; display: block; }
+.eyebrow {
+  font-family: var(--f-mono); font-size: var(--t-mono);
+  letter-spacing: var(--tr-micro); text-transform: uppercase; color: var(--acid);
+  margin-bottom: var(--stack);
+}
+.hero h1 {
+  font-family: var(--f-sans); font-weight: 800;
+  font-size: var(--t-display); line-height: var(--lh-tight);
+  letter-spacing: var(--tr-display);
+  text-wrap: balance;
+  max-width: 24ch; margin: 0 0 calc(var(--sp) * 7);
+}
+.hero h1 em { font-style: normal; color: inherit; display: block; }
+.lede {
+  font-size: var(--t-h3); color: var(--ink-2);
+  max-width: 42ch; margin: 0;
+}
+
+/* the two figures, separated by rules not tiles */
+.count {
+  display: grid; grid-template-columns: auto 1fr; gap: 4px 18px;
+  align-items: baseline; max-width: 560px;
+  border-top: var(--rule) solid var(--line); padding-top: 18px;
+}
+.count__n {
+  font-family: var(--f-mono); font-weight: 700; font-size: var(--t-h2);
+  font-variant-numeric: tabular-nums; letter-spacing: -0.02em; color: var(--acid);
+}
+.count__n--null { color: var(--ink-4); }
+.count__k {
+  font-family: var(--f-mono); font-size: var(--t-mono); color: var(--ink-4);
+  letter-spacing: var(--tr-mono); text-transform: uppercase;
+}
+
+/* ===========================================================
+   Sections deliberately do not share a shape. Each one is laid
+   out for what it has to say, and several break the left edge
+   on purpose so the page is not one column of identical blocks.
+   =========================================================== */
+
+h2 {
+  font-family: var(--f-sans); font-weight: 800;
+  text-wrap: balance;
+  font-size: var(--t-h1); line-height: var(--lh-snug);
+  letter-spacing: var(--tr-h1); margin: 0;
+}
+h2 em { font-style: normal; color: inherit; }
+
+/* --- 01 full bleed. the drawing is the section --------------- */
+.bleed {
+  padding: var(--bay) var(--gutter);
+  border-top: var(--rule) solid var(--line);
+  background: color-mix(in oklab, var(--bg) 93%, transparent);
+}
+.bleed .flow { width: 100%; overflow-x: auto; }
+.bleed svg { width: 100%; min-width: 760px; height: auto; display: block; }
+.bleed figcaption {
+  margin: 34px 0 0 auto;
+  max-width: 34ch; text-align: right;
+  color: var(--ink-2);
+}
+
+/* --- 02 asymmetric. claim left, instrument indented ---------- */
+.offset {
+  padding: var(--bay) var(--gutter);
+  border-top: var(--rule) solid var(--line);
+  background: color-mix(in oklab, var(--bg) 93%, transparent);
+  display: grid; gap: 40px;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 980px) {
+  .offset {
+    /* placed against named columns, not invented fractions */
+    grid-template-columns: var(--col-5) 1fr;
+    column-gap: var(--col-1);
+    align-items: start;
+  }
+  .offset__claim { grid-column: 1; }
+  .instrument    { grid-column: 2; }
+  /* the aside hangs under the claim, deliberately short */
+  .aside         { grid-column: 1; max-width: 30ch; }
+}
+.offset__claim h2 { max-width: 22ch; margin-bottom: 20px; }
+.tight { color: var(--ink-2); max-width: 36ch; margin: 0; }
+.aside {
+  margin: 0; color: var(--ink-3);
+  font-size: var(--t-mono); font-family: var(--f-mono); line-height: 1.85;
+}
+
+/* --- 03 the tree runs off the right edge --------------------- */
+.proof {
+  padding: var(--bay) 0 var(--bay) var(--gutter);
+  border-top: var(--rule) solid var(--line);
+  background: color-mix(in oklab, var(--bg) 93%, transparent);
+  overflow: clip;
+}
+.proof__h { max-width: 26ch; margin-bottom: 52px; }
+.proof .tree { width: 100%; margin: 0 0 44px; }
+/* wider than its container on purpose, so it leaves the frame */
+.proof .tree svg { width: min(1180px, 128%); height: auto; display: block; }
+.wide {
+  max-width: 70ch; color: var(--ink-3);
+  margin: 0 var(--gutter) 44px 0;
+}
+
+/* --- 04 type only, nothing else ------------------------------ */
+.say {
+  padding: calc(var(--bay) * 1.4) var(--gutter);
+  border-top: var(--rule) solid var(--line);
+  background: var(--bg-deep);
+}
+.say p:first-child {
+  font-family: var(--f-sans); font-weight: 800;
+  font-size: var(--t-h1); line-height: var(--lh-snug);
+  letter-spacing: var(--tr-h1);
+  max-width: 30ch; margin: 0 0 calc(var(--sp) * 7);
+  text-wrap: balance;
+}
+.say em { font-style: normal; color: inherit; }
+/* indented, quieter, a second voice */
+.say__after {
+  max-width: 44ch; color: var(--ink-3); margin: 0;
+  padding-left: clamp(0px, 8vw, 150px);
+}
+@media (min-width: 980px) {
+  .say { display: grid; grid-template-columns: var(--col-7) 1fr; column-gap: var(--col-1); align-items: end; }
+  .say p:first-child { margin: 0; }
+  .say__after { padding-left: 0; }
+}
+
+/* --- 05 edge to edge ----------------------------------------- */
+.register {
+  padding: var(--bay) 0 0;
+  border-top: var(--rule) solid var(--line);
+  background: color-mix(in oklab, var(--bg) 93%, transparent);
+}
+.register__head {
+  display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between;
+  gap: 20px; padding: 0 var(--gutter) 40px;
+}
+.register__head h2 { max-width: 26ch; }
+
+/* --- diagrams: lines and marks only ------------------------- */
+.flow, .tree { margin: 0; width: 100%; overflow-x: auto; }
+.flow svg, .tree svg { width: 100%; min-width: 620px; height: auto; display: block; }
+
+.lbl { font-family: var(--f-mono); font-size: 13px; letter-spacing: var(--tr-mono);
+       fill: var(--ink); text-transform: uppercase; }
+.lbl--null { fill: var(--ink-4); }
+.sub, .tag { font-family: var(--f-mono); font-size: 10.5px; letter-spacing: var(--tr-mono);
+             fill: var(--ink-4); text-transform: uppercase; }
+.tag--null { fill: var(--ink-4); opacity: 0.75; }
+.w { stroke: var(--line-hi); stroke-width: 1; fill: none; }
+.w--dash { stroke-dasharray: 3 5; stroke: var(--line-2); }
+.w--hair { stroke: var(--line); }
+
+.br { stroke: var(--line-hi); stroke-width: 1; fill: none; }
+.br--gone { stroke: var(--line); stroke-dasharray: 3 5; }
+.nd { fill: var(--acid); }
+.nl { font-family: var(--f-mono); font-size: 10.5px; fill: var(--ink-4);
+      text-anchor: middle; letter-spacing: var(--tr-mono); }
+.nl--null { fill: var(--acid); }
+.gone path { stroke: var(--acid); stroke-width: 1.4; }
+
+/* --- the bond, as a ruled entry ----------------------------- */
+.instrument { margin: 0; max-width: 680px; border-top: var(--rule) solid color-mix(in srgb, currentColor 16%, transparent); }
+.instrument > div {
+  display: grid; grid-template-columns: 120px 1fr; gap: 18px;
+  padding: calc(var(--sp) * 3) 0;
+  border-bottom: var(--rule) solid color-mix(in srgb, currentColor 10%, transparent);
+  align-items: baseline;
+}
+.instrument dt {
+  font-family: var(--f-mono); font-size: var(--t-micro); letter-spacing: var(--tr-micro);
+  text-transform: uppercase; color: var(--ink-4);
+}
+.instrument dd {
+  margin: 0; font-family: var(--f-mono); font-size: var(--t-mono); color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+.instrument--big dd { font-size: var(--t-h2); color: var(--ink); letter-spacing: -0.02em; }
+.instrument--big b { color: var(--acid); font-weight: 700; }
+.live { color: var(--acid) !important; }
+
+/* --- numbered run ------------------------------------------- */
+.run { list-style: none; margin: calc(var(--bay) * 0.45) 0 0; padding: 0; max-width: 680px;
+       border-top: var(--rule) solid var(--line); }
+.run li {
+  display: grid; grid-template-columns: 34px 1fr; gap: 14px;
+  padding: calc(var(--sp) * 3) 0;
+  border-bottom: var(--rule) solid color-mix(in srgb, currentColor 10%, transparent);
+  color: var(--ink-2);
+}
+.run em {
+  font-style: normal; font-family: var(--f-mono); font-size: var(--t-micro);
+  letter-spacing: var(--tr-micro); color: var(--acid); text-transform: uppercase;
+}
+
+/* --- ledger -------------------------------------------------- */
+.ledger { max-width: var(--maxw); }
+.ledger__head {
+  display: grid; grid-template-columns: 90px 1fr 110px 90px 110px; gap: 18px;
+  font-family: var(--f-mono); font-size: var(--t-micro); letter-spacing: var(--tr-micro);
+  text-transform: uppercase; color: var(--ink-4); padding-bottom: 10px;
+}
+.ledger__rule { height: var(--rule); background: var(--line-2); }
+.ledger__none { color: var(--ink-3); max-width: var(--measure); padding: 26px 0 22px; margin: 0; }
+
+/* --- foot ---------------------------------------------------- */
+.foot {
+  position: relative; z-index: var(--z-page);
+  display: flex; flex-wrap: wrap; gap: 8px 32px;
+  padding: 26px var(--gutter);
+  border-top: var(--rule) solid var(--line);
+  background: var(--bg-deep);
+  font-family: var(--f-mono); font-size: var(--t-micro);
+  letter-spacing: var(--tr-micro); text-transform: uppercase; color: var(--ink-4);
+}
+
+/* --- ledger, full width, no gutter --------------------------- */
+.ledger { max-width: none; }
+.ledger__head {
+  display: grid; grid-template-columns: 110px 1fr 120px 100px 130px; gap: 18px;
+  padding: 0 var(--gutter) 10px;
+  font-family: var(--f-mono); font-size: var(--t-micro);
+  letter-spacing: var(--tr-micro); text-transform: uppercase; color: var(--ink-4);
+}
+.ledger__rule { height: var(--rule); background: var(--line-2); }
+.ledger__none {
+  color: var(--ink-3); max-width: 46ch; margin: 0;
+  padding: 30px var(--gutter) var(--bay);
+}
+
+/* the run of steps sits in from the edge, not flush with it */
+.run { margin-left: clamp(0px, 6vw, 110px); max-width: 52ch; }
+
+
+/* --- one sentence, full screen, nothing else ----------------- */
+.line {
+  min-height: 72svh;
+  display: grid; align-content: center;
+  padding: var(--bay) var(--gutter);
+  border-top: var(--rule) solid var(--line);
+  background: var(--bg-deep);
+}
+.line p {
+  font-family: var(--f-sans); font-weight: 800;
+  font-size: var(--t-display); line-height: var(--lh-tight);
+  letter-spacing: var(--tr-display);
+  max-width: 26ch; margin: 0;
+  text-wrap: balance;
+}
+.line em { font-style: normal; color: inherit; display: block; }
+
+/* --- the mark, dissolved into its own light ---------------------
+   The video is a neon square. Shown raw it reads as a pasted box, so
+   its edges are feathered with a radial mask and it sits on a glow of
+   the same hue that falls away into the page. No edge is ever seen. */
+.stamp {
+  position: relative;
+  border-top: var(--rule) solid var(--line);
+  background: var(--bg-deep);
+  padding: var(--bay) var(--gutter);
+  display: grid; gap: calc(var(--sp) * 9);
+  grid-template-columns: 1fr;
+  align-items: center;
+  overflow: clip;
+}
+.stamp__mark {
+  position: relative; margin: 0 auto; line-height: 0;
+  width: min(100%, 420px); aspect-ratio: 1;
+}
+.stamp__mark::before {
+  content: ""; position: absolute; inset: -30%; z-index: 0; pointer-events: none;
+  background: radial-gradient(closest-side, rgb(212 222 0 / 0.22), rgb(212 222 0 / 0.07) 50%, transparent 100%);
+  filter: blur(40px);
+}
+.stamp__mark video {
+  position: relative; z-index: 1;
+  width: 100%; height: 100%; display: block; object-fit: cover;
+  -webkit-mask-image: radial-gradient(closest-side, #000 40%, rgb(0 0 0 / 0.55) 70%, transparent 100%);
+  mask-image: radial-gradient(closest-side, #000 40%, rgb(0 0 0 / 0.55) 70%, transparent 100%);
+}
+.stamp__line {
+  margin: 0; max-width: 18ch;
+  font-family: var(--f-sans); font-weight: 800;
+  font-size: var(--t-h1); line-height: var(--lh-snug);
+  letter-spacing: var(--tr-h1);
+  text-wrap: balance;
+}
+@media (min-width: 1000px) {
+  .stamp {
+    grid-template-columns: var(--col-6) 1fr;
+    column-gap: var(--col-1);
+    padding-block: calc(var(--bay) * 0.7);
+  }
+  .stamp__line { grid-column: 1; grid-row: 1; }
+  .stamp__mark { grid-column: 2; grid-row: 1; width: min(100%, 560px); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  /* own layer, so the float moves a finished bitmap instead of re-running the blur */
+  .stamp__mark { animation: stamp-float 9s var(--ease) infinite alternate; will-change: transform; }
+  @keyframes stamp-float { from { transform: translateY(-8px); } to { transform: translateY(8px); } }
+}
+
+/* --- integrate: builder facing, same rules, no boxes ---------- */
+.wire {
+  padding: var(--bay) var(--gutter);
+  border-top: var(--rule) solid var(--line);
+  background: color-mix(in oklab, var(--bg) 93%, transparent);
+}
+.wire h2 { max-width: 20ch; margin-bottom: calc(var(--sp) * 6); }
+.wire__lede {
+  color: var(--ink-2); max-width: 54ch;
+  margin: 0 0 calc(var(--bay) * 0.5);
+}
+
+/* a code block as a ruled passage, not a panel */
+.code { margin: 0 0 calc(var(--sp) * 11); max-width: 68ch; }
+.code__k {
+  font-family: var(--f-mono); font-size: var(--t-micro);
+  letter-spacing: var(--tr-micro); text-transform: uppercase;
+  color: var(--ink-4); margin: 0 0 calc(var(--sp) * 3);
+}
+.code pre {
+  margin: 0; padding: 0 0 0 calc(var(--sp) * 5);
+  border-left: var(--rule) solid color-mix(in srgb, currentColor 22%, transparent);
+  overflow-x: auto;
+}
+.code code {
+  font-family: var(--f-mono); font-size: var(--t-mono);
+  line-height: 1.6; color: var(--ink-2); white-space: pre;
+}
+
+/* where to find it: ruled rows, no cards */
+.where {
+  margin: 0; max-width: 78ch;
+  border-top: var(--rule) solid color-mix(in srgb, currentColor 18%, transparent);
+}
+.where > div {
+  display: grid; grid-template-columns: 110px 1fr; gap: calc(var(--sp) * 5);
+  padding: calc(var(--sp) * 4) 0;
+  border-bottom: var(--rule) solid color-mix(in srgb, currentColor 10%, transparent);
+  align-items: baseline;
+}
+.where dt {
+  font-family: var(--f-mono); font-size: var(--t-micro);
+  letter-spacing: var(--tr-micro); text-transform: uppercase; color: var(--ink-4);
+}
+.where dd { margin: 0; grid-column: 2; font-family: var(--f-mono); font-size: var(--t-mono); color: var(--ink-2); }
+.where dd a {
+  color: var(--acid);
+  border-bottom: var(--rule) solid color-mix(in srgb, var(--acid) 40%, transparent);
+  transition: var(--tx) var(--t-fast) var(--ease);
+}
+.where dd a:hover { border-bottom-color: var(--acid); }
+.where__note { color: var(--ink-4) !important; font-family: var(--f-sans) !important; font-size: var(--t-body) !important; }
+
+/* --- split: words on the left, the working part on the right ---
+   For sections that were one column of text with nothing beside it.
+   Below 980px it falls back to a single column in source order. */
+.split { display: grid; gap: calc(var(--sp) * 10); grid-template-columns: 1fr; }
+@media (min-width: 980px) {
+  .split { grid-template-columns: var(--col-5) 1fr; column-gap: var(--col-1); align-items: start; }
+  .split__side { padding-top: calc(var(--sp) * 2); }
+  .split__side .code:last-child, .split__text .where:last-child { margin-bottom: 0; }
+  .split__text .wire__lede:last-child { margin-bottom: 0; }
+}
+.proof .split { padding-right: var(--gutter); }
+.proof .split .run { margin: 0; max-width: none; }
+.proof .split .wide { margin: 0; }
+
+/* five fixed columns do not fit a phone; keep what identifies the bond */
+@media (max-width: 719px) {
+  .register .ledger__head { grid-template-columns: 56px 1fr 90px; }
+  .register .ledger__head > :nth-child(n + 4) { display: none; }
+}
+
+/* the Claude mark, white, set against the label that names it */
+.skill-mark { display: flex; align-items: center; gap: calc(var(--sp) * 3); }
+.skill-mark img { width: 28px; height: 28px; flex: none; }
+
+/* --- two readers, side by side, ruled like the rest -------------- */
+.ways {
+  padding: var(--bay) var(--gutter);
+  border-top: var(--rule) solid var(--line);
+  background: color-mix(in oklab, var(--bg) 93%, transparent);
+}
+.ways h2 { margin-bottom: calc(var(--sp) * 12); }
+.ways__cols { display: grid; gap: calc(var(--sp) * 12); grid-template-columns: 1fr; }
+@media (min-width: 980px) { .ways__cols { grid-template-columns: 1fr 1fr; column-gap: var(--col-1); } }
+.ways .run { margin: 0; max-width: none; }

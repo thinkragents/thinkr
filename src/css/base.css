@@ -1,0 +1,22 @@
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: var(--f-sans); font-size: var(--t-body); line-height: var(--lh-body);
+  -webkit-font-smoothing: antialiased; overflow-x: clip;
+  font-variant-numeric: tabular-nums;
+}
+html.lenis, html.lenis body { height: auto; }
+.lenis.lenis-smooth { scroll-behavior: auto !important; }
+img, svg, canvas { display: block; max-width: 100%; }
+a { color: inherit; text-decoration: none; }
+h1, h2, h3, p, dl, dd, ol, ul { margin: 0; }
+::selection { background: var(--acid); color: var(--bg-deep); }
+:focus-visible { outline: 1px solid var(--acid); outline-offset: 3px; }
+
+/* one word, transformable, never broken */
+.wd { display: inline-block; white-space: nowrap; will-change: filter, opacity, transform; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}

@@ -1,0 +1,53 @@
+# Render Blueprint: New -> Blueprint -> this repo creates both services.
+#
+# thinkr-site  the static site, rebuilt on every push to main
+# thinkr-api   the HTTP API. Until the contract is on mainnet THINKR_BONDS is empty
+#              and every bond read answers "not deployed", which is the truth.
+#
+# Values marked sync: false are filled in on the Render dashboard after deploy.
+
+services:
+  - type: web
+    name: thinkr-site
+    runtime: static
+    buildCommand: npm ci && npm run build
+    staticPublishPath: ./dist
+    envVars:
+      # where the register page reads bonds from; the thinkr-api URL once it is up
+      - key: VITE_THINKR_API
+        sync: false
+    headers:
+      # hashed build output never changes, so it can be cached for good
+      - path: /assets/*
+        name: cache-control
+        value: public, max-age=31536000, immutable
+
+  - type: web
+    name: thinkr-api
+    runtime: node
+    plan: free
+    # US East: nearest to the Robinhood Chain RPC. Every bond read is a round trip to it.
+    region: virginia
+    # the API imports the delivery tree from contracts/sdk, so both get installed
+    buildCommand: npm ci --prefix api && npm ci --prefix contracts/sdk
+    startCommand: node api/src/server.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: THINKR_CHAIN_ID
+        value: "4663"
+      - key: THINKR_CHAIN_NAME
+        value: Robinhood Chain
+      - key: THINKR_RPC
+        value: https://rpc.mainnet.chain.robinhood.com
+      - key: THINKR_REGISTRY
+        value: "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432"
+      - key: THINKR_CURRENCY
+        value: "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168"
+      # set after the mainnet deploy: the contract address, and the L2 block it was
+      # deployed in (contracts/script/deployed-at.sh prints it)
+      - key: THINKR_BONDS
+        sync: false
+      - key: THINKR_DEPLOYED_AT
+        sync: false

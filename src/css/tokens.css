@@ -1,0 +1,135 @@
+/* ===========================================================
+   THINKR — design tokens
+
+   Colour is a perceptual ramp in oklch, not a handful of hexes,
+   so every surface, border and state is a chosen step rather
+   than an opacity guess. Type steps at breakpoints instead of
+   interpolating, so every size is a decision.
+   =========================================================== */
+
+@property --bracket { syntax: "<length>"; inherits: true; initial-value: 0px; }
+
+:root {
+  color-scheme: dark;
+
+  /* --- neutral ramp, faint green cast ---------------------- */
+  --n-100: oklch(14.5% 0.006 150);
+  --n-150: oklch(17.0% 0.007 150);
+  --n-200: oklch(20.0% 0.008 150);
+  --n-250: oklch(23.5% 0.009 150);
+  --n-300: oklch(28.0% 0.010 150);
+  --n-400: oklch(36.0% 0.011 150);
+  --n-500: oklch(46.0% 0.012 150);
+  --n-600: oklch(57.0% 0.012 150);
+  --n-700: oklch(68.0% 0.011 150);
+  --n-800: oklch(78.0% 0.010 150);
+  --n-900: oklch(86.0% 0.009 150);
+  --n-1000: oklch(92.0% 0.008 150);
+
+  /* --- acid ramp, built around the brand hue --------------- */
+  --a-200: oklch(28.0% 0.070 118);
+  --a-300: oklch(36.0% 0.098 118);
+  --a-400: oklch(46.0% 0.128 118);
+  --a-500: oklch(58.0% 0.156 118);
+  --a-600: oklch(70.0% 0.176 118);
+  --a-700: oklch(80.0% 0.183 118);
+  --a-800: oklch(89.0% 0.190 118);   /* the brand mark */
+  --a-900: oklch(94.0% 0.140 118);
+
+  /* --- signal ---------------------------------------------- */
+  --red-600: oklch(62% 0.190 25);
+  --red-800: oklch(76% 0.150 25);
+
+  /* --- semantic -------------------------------------------- */
+  --bg:        var(--n-100);
+  --bg-deep:   oklch(11.5% 0.005 150);
+  --paper:     var(--n-150);
+  --paper-2:   var(--n-200);
+
+  --ink:       var(--n-1000);
+  --ink-2:     var(--n-800);
+  --ink-3:     var(--n-600);
+  --ink-4:     var(--n-500);
+
+  --acid:      var(--a-800);
+  --acid-dim:  var(--a-500);
+
+  --rule:      1px;
+  --line:      var(--n-250);
+  --line-2:    var(--n-300);
+  --line-hi:   var(--n-400);
+
+  /* --- type ------------------------------------------------- */
+  --f-mark: "Space Grotesk Variable", "Space Grotesk", system-ui, sans-serif; /* wordmark only */
+  --f-sans: "Space Grotesk Variable", "Space Grotesk", -apple-system, "Helvetica Neue", sans-serif;
+  --f-mono: "Lekton", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* a ratio scale, stepped at breakpoints, never interpolated */
+  --t-display: 2.5rem;
+  --t-h1:      1.953rem;
+  --t-h2:      1.5625rem;
+  --t-h3:      1.125rem;
+  --t-body:    0.9375rem;
+  --t-mono:    0.75rem;
+  --t-micro:   0.6875rem;
+
+  --lh-tight: 1.02;
+  --lh-snug:  1.14;
+  --lh-body:  1.62;
+
+  /* tracking is a property of the size, not one value reused */
+  --tr-display: -0.025em;
+  --tr-h1:      -0.021em;
+  --tr-h2:      -0.013em;
+  --tr-body:    -0.004em;
+  --tr-mono:     0.021em;
+  --tr-micro:    0.042em;
+
+  /* --- one spacing unit, everything is a multiple ----------- */
+  --sp: 4px;
+  --gutter: calc(var(--sp) * 5);
+  --bay:    calc(var(--sp) * 16);
+  --stack:  calc(var(--sp) * 4);
+  --measure: 58ch;
+  --maxw:   1320px;
+
+  /* --- a 12 column grid, columns named so things can be
+         placed against them rather than guessed at ----------- */
+  --cols: 12;
+  --col-gap: calc(var(--sp) * 5);
+  --track: calc((100vw - (var(--gutter) * 2) - (var(--col-gap) * 11)) / 12);
+  --col-1:  var(--track);
+  --col-2:  calc(var(--track) * 2  + var(--col-gap));
+  --col-3:  calc(var(--track) * 3  + var(--col-gap) * 2);
+  --col-4:  calc(var(--track) * 4  + var(--col-gap) * 3);
+  --col-5:  calc(var(--track) * 5  + var(--col-gap) * 4);
+  --col-6:  calc(var(--track) * 6  + var(--col-gap) * 5);
+  --col-7:  calc(var(--track) * 7  + var(--col-gap) * 6);
+  --col-8:  calc(var(--track) * 8  + var(--col-gap) * 7);
+  --col-9:  calc(var(--track) * 9  + var(--col-gap) * 8);
+  --col-10: calc(var(--track) * 10 + var(--col-gap) * 9);
+
+  --ease: cubic-bezier(.2, .8, .2, 1);
+  --t-fast: 100ms; --t-med: 250ms; --t-slow: 500ms;
+  --tx: color, background-color, border-color, outline-color, opacity;
+  --nav-h: 56px;
+
+  --z-scene: 0; --z-page: 2; --z-nav: 60;
+}
+
+@media (min-width: 720px) {
+  :root {
+    --t-display: 4.0625rem; --t-h1: 2.75rem; --t-h2: 1.953rem; --t-h3: 1.125rem;
+    --t-body: 1rem; --t-mono: 0.78125rem;
+    --gutter: calc(var(--sp) * 8); --bay: calc(var(--sp) * 24); --stack: calc(var(--sp) * 5);
+  }
+}
+@media (min-width: 1100px) {
+  :root {
+    --t-display: 5.625rem; --t-h1: 3.4375rem; --t-h2: 2.25rem;
+    --gutter: max(calc(var(--sp) * 11), 4vw, calc((100vw - 1680px) / 2)); --bay: calc(var(--sp) * 32);
+  }
+}
+@media (min-width: 1500px) {
+  :root { --t-display: 6.5625rem; --t-h1: 4.0625rem; --bay: calc(var(--sp) * 37); }
+}

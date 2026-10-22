@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>THINKR · Protocol</title>
+    <meta name="description" content="How a THINKR bond works: epochs, delivery roots, claims, and the things this contract deliberately cannot do." />
+    <meta name="theme-color" content="#0a0d09" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="stylesheet" href="/src/css/page-docs.css" />
+    <script>
+      (function(){var d=document.documentElement;
+        if('scrollRestoration' in history) history.scrollRestoration='manual';
+        if(matchMedia('(prefers-reduced-motion: reduce)').matches) d.classList.add('reduced');})();
+    </script>
+  </head>
+
+  <body>
+    <header class="nav" id="nav"></header>
+
+    <main class="page doc">
+      <header class="doc__head">
+        <p class="doc__kicker">TKR&#8209;001 &#183; Rev A</p>
+        <h1>A seller posts money<br />before it can take yours.</h1>
+        <p class="doc__lede">
+          x402 settles instantly and finally. There is no chargeback, no dispute, nobody to
+          call. THINKR does not change that and does not want to. It adds one reading a buyer
+          can take before it pays, and one thing a seller stands to lose if it does not deliver.
+        </p>
+      </header>
+
+      <nav class="toc" aria-label="Contents">
+        <a href="#shape">The shape</a>
+        <a href="#epochs">Epochs</a>
+        <a href="#claims">Claims</a>
+        <a href="#sizing">Sizing</a>
+        <a href="#limits">What it cannot do</a>
+      </nav>
+
+      <section class="doc__s" id="shape">
+        <h2>Not escrow</h2>
+        <p>
+          The buyer's payment is never held, delayed or routed through us. It settles over x402
+          exactly as it would otherwise. What sits in the contract is the <em>seller's</em> own
+          money, posted in advance, covering everything it sells.
+        </p>
+        <p>
+          A plumber is bonded. You do not put his fee in escrow. You check his bond before you
+          let him in the house.
+        </p>
+        <dl class="facts">
+          <div><dt>Chain</dt><dd>Robinhood Chain &#183; 4663</dd></div>
+          <div><dt>Identity</dt><dd>ERC&#8209;8004 registry, <span class="mono">0x8004A169…a432</span></dd></div>
+          <div><dt>Collateral</dt><dd>USDG &#183; minimum bond $1</dd></div>
+          <div><dt>Admin key</dt><dd>none &#183; every parameter is fixed at deployment</dd></div>
+        </dl>
+      </section>
+
+      <section class="doc__s" id="epochs">
+        <h2>The hour is the unit</h2>
+        <p>
+          Every hour a seller commits one merkle root of what it delivered in that hour. It has
+          one further hour to publish it. After that the root is final, published or not.
+        </p>
+        <ol class="seq">
+          <li><span>00:00&#8211;01:00</span><p>the seller delivers. Each delivery is a leaf: <span class="mono">keccak256(ref, digest)</span>. The ref is what both sides call the transaction (an x402 payment, an action_ref, a receipt id); the digest is the seller's evidence in whatever format it already keeps.</p></li>
+          <li><span>01:00&#8211;02:00</span><p>the window to commit that hour's root. Miss it and the hour has no root at all.</p></li>
+          <li><span>from 02:00</span><p>claims against that hour may be filed. The root is already fixed, so a seller can never see a claim and then write a root that answers it.</p></li>
+        </ol>
+        <p class="aside">
+          That ordering is the whole design. Everything else is bookkeeping around it.
+        </p>
+      </section>
+
+      <section class="doc__s" id="claims">
+        <h2>Silence pays out</h2>
+        <p>
+          A buyer that paid and received nothing files a claim and stakes 2% of it. The seller
+          has 48 hours to answer with a proof that the delivery is in the root it already
+          committed. One call, and the claimant's stake goes to the seller.
+        </p>
+        <p>
+          No answer, and after 48 hours anyone can settle it. The claimant takes its stake back
+          plus the claim, out of the bond.
+        </p>
+        <table class="spec">
+          <thead><tr><th>Parameter</th><th>Value</th><th>Why</th></tr></thead>
+          <tbody>
+            <tr><td>Epoch</td><td>1 hour</td><td>small trees, tiny proofs</td></tr>
+            <tr><td>Attestation window</td><td>1 hour</td><td>closes before claims open</td></tr>
+            <tr><td>Challenge window</td><td>48 hours</td><td>time to answer with a proof</td></tr>
+            <tr><td>Claim period</td><td>7 days</td><td>how long an hour stays claimable</td></tr>
+            <tr><td>Notice period</td><td>7 days</td><td>you cannot take payment Monday and pull the guarantee Tuesday</td></tr>
+            <tr><td>Claimant's stake</td><td>2%, min $0.01</td><td>filing at an honest seller costs</td></tr>
+            <tr><td>Minimum bond</td><td>$1</td><td>an entry ticket; buyers check the bond against the payment</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="doc__s" id="sizing">
+        <h2>The floor is a share, not a number</h2>
+        <p>
+          A claim must be at least <strong>1% of the bond it is filed against</strong>. A $1 bond
+          accepts 1 cent claims and a $10 bond 10 cent ones, the size agents actually pay today.
+          A $5,000 bond requires $50 claims. Nothing has to be redeployed when payments grow.
+        </p>
+        <p>
+          It is also the defence against flooding, and a stronger one than a fee. Because every
+          open claim reserves at least a hundredth of the bond, and reservations can never exceed
+          the bond, <strong>a seller can face at most 100 open claims at once</strong>. The attack
+          is bounded by arithmetic.
+        </p>
+        <div class="scale">
+          <div><span class="scale__k">bond $1</span><span class="scale__v">claims from $0.01</span></div>
+          <div><span class="scale__k">bond $10</span><span class="scale__v">claims from $0.10</span></div>
+          
+          <div><span class="scale__k">bond $5,000</span><span class="scale__v">claims from $50</span></div>
+        </div>
+      </section>
+
+      <section class="doc__s doc__s--warn" id="limits">
+        <h2>What this cannot do</h2>
+        <p>
+          Stated here rather than buried, because a guarantee that oversells itself is worse than
+          none.
+        </p>
+        <ul class="limits">
+          <li>
+            <strong>It cannot verify the payment happened.</strong> There is no on chain link
+            from an x402 settlement to a claim that holds across facilitators. What makes a false
+            claim unprofitable is the claimant's stake plus the seller's ability to kill it in one
+            call. The alternative is routing payments through us, which is escrow, which breaks
+            the thing x402 exists for.
+          </li>
+          <li>
+            <strong>A trade made late in a notice period is thinly covered.</strong> Notice is
+            visible on chain the moment it is given. Read the bond before you pay.
+          </li>
+          <li>
+            <strong>It does not judge quality.</strong> A delivery that is in the root is
+            discharged, whether or not it was any good. This answers "did anything arrive", not
+            "was it right".
+          </li>
+        </ul>
+      </section>
+
+      <footer class="doc__foot">
+        <a class="act act--solid" href="/bonds/">See the register</a>
+        <a class="act" href="/#integrate">Wire it in</a>
+      </footer>
+    </main>
+
+    <script type="module" src="/src/js/docs.js"></script>
+  </body>
+</html>

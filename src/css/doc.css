@@ -1,0 +1,144 @@
+/* ===========================================================
+   Protocol page. A document, so it reads in one column with a
+   contents list hanging in the margin. No cards: the hierarchy
+   is type and one hairline per section.
+   =========================================================== */
+
+.doc {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: calc(var(--nav-h) + var(--bay)) var(--gutter) var(--bay);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--bay);
+}
+
+.doc__head { max-width: 62ch; }
+.doc__kicker {
+  font-family: var(--f-mono); font-size: var(--t-micro);
+  letter-spacing: var(--tr-micro); text-transform: uppercase;
+  color: var(--ink-4); margin: 0 0 calc(var(--sp) * 5);
+}
+.doc h1 {
+  /* A document, not a hero. The display size belongs on the homepage. */
+  font-size: var(--t-h1); line-height: var(--lh-tight);
+  letter-spacing: var(--tr-display); font-weight: 500;
+  margin: 0 0 calc(var(--sp) * 7); color: var(--ink);
+}
+.doc__lede { color: var(--ink-2); max-width: 58ch; margin: 0; }
+
+/* contents: a row of rules on small screens, a margin list when there is room */
+.toc {
+  display: flex; flex-wrap: wrap; gap: calc(var(--sp) * 6);
+  padding: calc(var(--sp) * 4) 0;
+  border-top: var(--rule) solid var(--line);
+  border-bottom: var(--rule) solid var(--line);
+}
+.toc a {
+  font-family: var(--f-mono); font-size: var(--t-micro);
+  letter-spacing: var(--tr-micro); text-transform: uppercase;
+  color: var(--ink-4); transition: var(--tx) var(--t-fast) var(--ease);
+}
+.toc a:hover, .toc a[data-on] { color: var(--acid); }
+
+.doc__s { max-width: 68ch; }
+.doc__s h2 {
+  font-size: var(--t-h2); line-height: var(--lh-snug);
+  letter-spacing: var(--tr-h2); font-weight: 500; color: var(--ink);
+  margin: 0 0 calc(var(--sp) * 6);
+}
+.doc__s p { color: var(--ink-2); margin: 0 0 calc(var(--sp) * 5); max-width: 62ch; }
+.doc__s strong { color: var(--ink); font-weight: 500; }
+.doc__s em { color: var(--ink); font-style: normal; border-bottom: var(--rule) solid var(--acid-dim); }
+
+.aside {
+  color: var(--ink-4) !important;
+  padding-left: calc(var(--sp) * 5);
+  border-left: var(--rule) solid var(--line-2);
+}
+
+/* key/value facts, ruled rows */
+.facts { margin: calc(var(--sp) * 8) 0 0; border-top: var(--rule) solid var(--line); }
+.facts > div {
+  display: grid; grid-template-columns: 120px 1fr; gap: calc(var(--sp) * 5);
+  padding: calc(var(--sp) * 3) 0; border-bottom: var(--rule) solid var(--line);
+  align-items: baseline;
+}
+.facts dt {
+  font-family: var(--f-mono); font-size: var(--t-micro); letter-spacing: var(--tr-micro);
+  text-transform: uppercase; color: var(--ink-4);
+}
+.facts dd { margin: 0; color: var(--ink-2); font-size: var(--t-body); }
+
+/* the sequence: numbers in the margin, no boxes */
+.seq { list-style: none; margin: calc(var(--sp) * 6) 0; padding: 0; counter-reset: s; }
+.seq li {
+  display: grid; grid-template-columns: 130px 1fr; gap: calc(var(--sp) * 5);
+  padding: calc(var(--sp) * 4) 0;
+  border-top: var(--rule) solid var(--line);
+  align-items: baseline;
+}
+.seq li > span {
+  font-family: var(--f-mono); font-size: var(--t-mono);
+  letter-spacing: var(--tr-mono); color: var(--acid);
+}
+.seq li p { margin: 0; color: var(--ink-2); }
+
+/* spec table: rules only, scrolls on its own if it must */
+.spec { width: 100%; border-collapse: collapse; margin: calc(var(--sp) * 6) 0 0; display: block; overflow-x: auto; }
+.spec thead th {
+  text-align: left; font-family: var(--f-mono); font-size: var(--t-micro);
+  letter-spacing: var(--tr-micro); text-transform: uppercase; color: var(--ink-4);
+  font-weight: 400; padding: 0 calc(var(--sp) * 5) calc(var(--sp) * 3) 0;
+  border-bottom: var(--rule) solid var(--line-hi);
+}
+.spec td {
+  padding: calc(var(--sp) * 3) calc(var(--sp) * 5) calc(var(--sp) * 3) 0;
+  border-bottom: var(--rule) solid var(--line);
+  color: var(--ink-2); font-size: var(--t-body); vertical-align: baseline;
+}
+.spec td:nth-child(2) { font-family: var(--f-mono); font-size: var(--t-mono); color: var(--ink); white-space: nowrap; }
+.spec td:last-child { color: var(--ink-4); }
+
+/* the scaling illustration: three rows, type only */
+.scale { margin: calc(var(--sp) * 6) 0 0; }
+.scale > div {
+  display: grid; grid-template-columns: 160px 1fr; gap: calc(var(--sp) * 5);
+  padding: calc(var(--sp) * 3) 0; border-top: var(--rule) solid var(--line);
+  font-family: var(--f-mono); font-size: var(--t-mono); letter-spacing: var(--tr-mono);
+}
+.scale__k { color: var(--ink-4); }
+.scale__v { color: var(--acid); }
+
+/* the limits, marked so they are not mistaken for features */
+.doc__s--warn h2 { color: var(--ink); }
+.limits { list-style: none; margin: 0; padding: 0; }
+.limits li {
+  padding: calc(var(--sp) * 4) 0 calc(var(--sp) * 4) calc(var(--sp) * 5);
+  border-left: var(--rule) solid var(--red-600);
+  border-bottom: var(--rule) solid var(--line);
+  color: var(--ink-2);
+}
+.limits li strong { color: var(--ink); }
+
+.doc__foot {
+  display: flex; flex-wrap: wrap; gap: calc(var(--sp) * 4);
+  padding-top: calc(var(--sp) * 8); border-top: var(--rule) solid var(--line);
+}
+
+.mono { font-family: var(--f-mono); font-size: var(--t-mono); letter-spacing: var(--tr-mono); }
+
+@media (min-width: 1040px) {
+  .doc { grid-template-columns: var(--col-2) minmax(0, 1fr); column-gap: var(--col-gap); }
+  .doc__head, .doc__s, .doc__foot { grid-column: 2; }
+  .toc {
+    grid-column: 1; grid-row: 2 / span 20;
+    position: sticky; top: calc(var(--nav-h) + var(--sp) * 8);
+    align-self: start; flex-direction: column; gap: calc(var(--sp) * 3);
+    border: 0; border-left: var(--rule) solid var(--line);
+    padding: 0 0 0 calc(var(--sp) * 4);
+  }
+}
+@media (min-width: 900px) {
+  .doc h1 { font-size: calc(var(--t-h1) * 1.08); }
+}

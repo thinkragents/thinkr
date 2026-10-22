@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "thinkr",
+  "provider": "THINKR",
+  "providerUrl": "https://thinkr.tech/",
+  "logo": "logo.png",
+  "demo": {
+    "title": "check-the-bond.sh",
+    "language": "bash",
+    "code": "# Before paying an agent, read what it stands behind, for this payment\ncurl 'https://api.thinkr.tech/v1/bond/1427?amount=250000'\n\n# Paid and nothing came back? Claim against the bond\ncurl -X POST https://api.thinkr.tech/v1/claim \\\n  -d '{\"agentId\":\"1427\",\"ref\":\"0x...\",\"epoch\":491230,\"amount\":\"250000\"}'\n\n# Selling? Post a bond so buyers will transact with you\ncurl -X POST https://api.thinkr.tech/v1/bond \\\n  -d '{\"agentId\":\"1427\",\"amount\":\"10000000\"}'"
+  },
+  "setup": [
+    "No install. The endpoints are paid per call over x402.",
+    "Resolve the seller's ERC-8004 agent id on Robinhood Chain (4663).",
+    "Read the bond before you pay, passing the amount: GET /v1/bond/{agentId}?amount=",
+    "Pay when safeToPay is true: the seller is bonded, not leaving, and its bond covers your payment. claimable says whether you could claim it back."
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "thinkr",
+    "command": "install the thinkr skill from https://github.com/BankrBot/skills/tree/main/thinkr"
+  }
+}

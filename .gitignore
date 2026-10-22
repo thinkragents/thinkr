@@ -1,0 +1,22 @@
+node_modules/
+dist/
+.env
+.env.*
+.DS_Store
+
+# foundry
+contracts/out/
+contracts/cache/
+contracts/broadcast/
+contracts/lib/
+
+# scratch
+research/data/
+contracts/.gitmodules
+contracts/foundry.lock
+
+# drafts not yet posted
+outreach/
+
+# private: the x402 scanners and their data
+research/
