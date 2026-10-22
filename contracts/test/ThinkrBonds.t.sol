@@ -530,6 +530,28 @@ contract ThinkrBondsTest is Test {
         assertEq(uint8(_state(id)), uint8(ThinkrBonds.ClaimState.Discharged));
     }
 
+    /// @notice Final review, L1: after a transfer, the new owner cannot overwrite a root the
+    ///         previous owner's sealer wrote; the paid seller's record stands.
+    function test_a_new_owner_cannot_overwrite_the_previous_owners_sealer_root() public {
+        address key = makeAddr("key");
+        vm.prank(seller);
+        bonds.setSealer(AGENT, key);
+        _bond(500 * ONE);
+        vm.warp((uint256(bonds.currentEpoch()) + 1) * bonds.EPOCH_LENGTH());
+        uint64 epoch = _pay(buyer, REF, 100 * ONE);
+        vm.warp((uint256(epoch) + 1) * bonds.EPOCH_LENGTH());
+        vm.prank(key);
+        bonds.attest(AGENT, epoch, Merkle.leaf(REF, DIGEST));
+        registry.register(AGENT, stranger); // transferred while the window is open
+        vm.prank(stranger);
+        vm.expectRevert(ThinkrBonds.RootAlreadySet.selector);
+        bonds.attest(AGENT, epoch, keccak256("rewritten"));
+        _openClaims(epoch);
+        uint256 id = _claim(buyer, REF);
+        bonds.discharge(id, epoch, DIGEST, new bytes32[](0));
+        assertEq(uint8(_state(id)), uint8(ThinkrBonds.ClaimState.Discharged));
+    }
+
     /// @notice Review 3: a sealer cannot seal hours that ended before it was appointed.
     function test_a_sealer_cannot_seal_hours_before_its_appointment() public {
         uint64 old = bonds.currentEpoch();

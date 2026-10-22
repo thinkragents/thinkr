@@ -153,6 +153,11 @@ contract ThinkrBonds is ReentrancyGuard {
     ///         so a leaked sealer key cannot lock the owner out of its own seal.
     mapping(uint256 agentId => mapping(uint64 epoch => bool)) public sealedByOwner;
 
+    /// @notice The owner whose key or sealer wrote an hour's root. Only that same owner may
+    ///         replace a sealer's root, so a new owner cannot overwrite the previous owner's
+    ///         record after a transfer.
+    mapping(uint256 agentId => mapping(uint64 epoch => address)) public sealedFor;
+
     uint256 public nextClaimId = 1;
 
     // --------------------------------------------------------------- events
@@ -413,11 +418,13 @@ contract ThinkrBonds is ReentrancyGuard {
         if (root == bytes32(0)) revert EmptyRoot();
         if (epoch >= currentEpoch()) revert EpochNotEnded();
         if (block.timestamp >= attestDeadline(epoch)) revert AttestWindowClosed();
-        if (roots[agentId][epoch] != bytes32(0) && (!byOwner || sealedByOwner[agentId][epoch])) {
-            revert RootAlreadySet();
-        }
+        if (
+            roots[agentId][epoch] != bytes32(0)
+                && (!byOwner || sealedByOwner[agentId][epoch] || sealedFor[agentId][epoch] != owner)
+        ) revert RootAlreadySet();
 
         roots[agentId][epoch] = root;
+        sealedFor[agentId][epoch] = owner;
         if (byOwner) sealedByOwner[agentId][epoch] = true;
         emit Attested(agentId, epoch, root);
     }
