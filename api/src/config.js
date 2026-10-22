@@ -14,17 +14,23 @@ export const CHAIN = {
   explorer: 'https://robinhoodchain.blockscout.com',
 };
 
+// The first mainnet contract, retired: a claim on an invented payment could not be
+// answered in it. An environment still naming it is stale config, so it falls back
+// to the current deploy rather than quietly serving the old one.
+const RETIRED = ['0xd5e4643e7e20c987a3da124b05a54cae57de9dda'];
+const bondsEnv = RETIRED.includes(process.env.THINKR_BONDS?.toLowerCase()) ? undefined : process.env.THINKR_BONDS;
+
 export const ADDRESSES = {
   // ERC-8004 identity registry, verified live on 4663 at the deterministic address.
   registry: process.env.THINKR_REGISTRY ?? '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432',
   // ThinkrBonds v3 on Robinhood Chain mainnet, deployed 2026-10-22. Overridable so the
   // tests and the testnet rehearsal can point the same code at their own deploys.
-  bonds: process.env.THINKR_BONDS ?? '0x41f3836260D04fa156D3ef2a4Ab7e5C1dEe0F95e',
+  bonds: bondsEnv ?? '0x41f3836260D04fa156D3ef2a4Ab7e5C1dEe0F95e',
   // USDG, the collateral token it was deployed with.
   currency: process.env.THINKR_CURRENCY ?? '0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168',
   // The block ThinkrBonds was deployed in. Claim history is read from events, and no
   // public RPC will search a hundred million blocks from genesis, so reads start here.
-  deployedAt: BigInt(process.env.THINKR_DEPLOYED_AT ?? 95120145),
+  deployedAt: BigInt((bondsEnv && process.env.THINKR_DEPLOYED_AT) || 95120145),
 };
 
 export class NotDeployed extends Error {
