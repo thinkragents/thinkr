@@ -81,6 +81,8 @@ test('an unbonded agent reads as unbonded, not as an error', async () => {
   const bond = await api('GET', '/v1/bond/1');
   assert.equal(bond.status, 'unbonded');
   assert.equal(bond.safeToPay, false, 'nobody should pay an agent with nothing posted');
+  const priced = await api('GET', '/v1/bond/1?amount=40000');
+  assert.equal(priced.claimable, false, 'nothing posted, nothing to claim against');
 });
 
 test('posting a bond, through the API, end to end', async () => {

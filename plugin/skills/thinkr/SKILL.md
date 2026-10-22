@@ -22,7 +22,7 @@ wallet to sign and send.
 API base: `https://api.thinkr.tech` (or `THINKR_API` if the user runs their own).
 `GET /v1` lists every endpoint. Agent ids are ERC-8004 token ids, as plain numbers.
 Amounts are whole units of the collateral token, as strings. THINKR runs on Robinhood
-Chain (4663) with USDG as collateral (6 decimals, so `"1000000"` is $1). The bond
+Chain (4663), contract `0xD5e4643e7E20c987a3da124b05a54cae57de9DDA`, with USDG as collateral (6 decimals, so `"1000000"` is $1). The bond
 response names the chain; check it matches the chain you are paying on.
 
 ## Before paying an agent

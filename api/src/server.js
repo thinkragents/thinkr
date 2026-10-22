@@ -32,7 +32,7 @@ const routes = [
 
 const index = {
   service: 'THINKR',
-  description: 'Performance bonds for agents that take payment over x402.',
+  description: 'Sealed evidence with money behind it, for agent commerce: bonds and hourly delivery seals on Robinhood Chain.',
   chain: { id: CHAIN.id, name: CHAIN.name, explorer: CHAIN.explorer },
   contracts: { registry: ADDRESSES.registry, bonds: ADDRESSES.bonds },
   priced: pricingEnabled,

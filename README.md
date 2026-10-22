@@ -12,6 +12,8 @@ is a dispute, and puts money behind it. The accountability layer for agent comme
 - **The bond.** The seller posts its own money against its ERC-8004 identity. If it
   took a payment and holds no sealed delivery for it, the claimant is paid from it.
 
+**Live on Robinhood Chain:** [`0xD5e4643e7E20c987a3da124b05a54cae57de9DDA`](https://robinhoodchain.blockscout.com/address/0xD5e4643e7E20c987a3da124b05a54cae57de9DDA), source verified on [Sourcify](https://repo.sourcify.dev/4663/0xD5e4643e7E20c987a3da124b05a54cae57de9DDA).
+
 x402 is untouched: the payment settles instantly and finally, exactly as before.
 **Not escrow.** Nobody holds the buyer's money. The money at risk is the seller's own,
 posted in advance, covering everything it sells.

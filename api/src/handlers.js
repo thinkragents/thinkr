@@ -117,7 +117,8 @@ export async function getBond(rawAgentId, rawPayment) {
       : {
           payment: payment.toString(),
           covers: free >= payment,
-          claimable: payment >= minClaim,
+          // nothing posted means nothing to claim against, whatever the floor says
+          claimable: total > 0n && payment >= minClaim,
         }),
     chain: { id: CHAIN.id, name: CHAIN.name },
   };

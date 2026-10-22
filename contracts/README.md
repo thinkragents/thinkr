@@ -96,8 +96,9 @@ forge test
 forge test --match-path 'test/*.invariant.t.sol'
 ```
 
-Nothing here is deployed. `script/Deploy.s.sol` targets Robinhood Chain (4663) with
-USDG; run it without `--broadcast` to simulate against mainnet.
+**Deployed on Robinhood Chain (4663): `0xD5e4643e7E20c987a3da124b05a54cae57de9DDA`**, block 94996670, source verified
+(exact match) on [Sourcify](https://repo.sourcify.dev/4663/0xD5e4643e7E20c987a3da124b05a54cae57de9DDA). `script/Deploy.s.sol` is the script that deployed
+it; `script/Testnet.s.sol` rehearses the same thing on testnet 46630.
 
 ## Repo
 

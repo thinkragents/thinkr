@@ -45,9 +45,8 @@ services:
         value: "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432"
       - key: THINKR_CURRENCY
         value: "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168"
-      # set after the mainnet deploy: the contract address, and the L2 block it was
-      # deployed in (contracts/script/deployed-at.sh prints it)
+      # ThinkrBonds on Robinhood Chain mainnet, and the L2 block it was deployed in
       - key: THINKR_BONDS
-        sync: false
+        value: "0xD5e4643e7E20c987a3da124b05a54cae57de9DDA"
       - key: THINKR_DEPLOYED_AT
-        sync: false
+        value: "94996670"
