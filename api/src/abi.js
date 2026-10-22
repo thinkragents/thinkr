@@ -366,7 +366,13 @@ export const bondsAbi = [
   {
     "type": "function",
     "name": "collect",
-    "inputs": [],
+    "inputs": [
+      {
+        "name": "to",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
     "outputs": [],
     "stateMutability": "nonpayable"
   },
@@ -726,6 +732,48 @@ export const bondsAbi = [
   },
   {
     "type": "function",
+    "name": "sealers",
+    "inputs": [
+      {
+        "name": "agentId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "owner",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "sealer",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "setSealer",
+    "inputs": [
+      {
+        "name": "agentId",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "sealer",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "settle",
     "inputs": [
       {
@@ -921,6 +969,12 @@ export const bondsAbi = [
         "internalType": "address"
       },
       {
+        "name": "to",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
         "name": "amount",
         "type": "uint256",
         "indexed": false,
@@ -999,6 +1053,31 @@ export const bondsAbi = [
         "type": "uint128",
         "indexed": false,
         "internalType": "uint128"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "SealerSet",
+    "inputs": [
+      {
+        "name": "agentId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "owner",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "sealer",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
       }
     ],
     "anonymous": false
@@ -1128,6 +1207,11 @@ export const bondsAbi = [
   },
   {
     "type": "error",
+    "name": "EmptyRoot",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "EpochNotEnded",
     "inputs": []
   },
@@ -1148,6 +1232,11 @@ export const bondsAbi = [
   },
   {
     "type": "error",
+    "name": "NotASealer",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "NotAgentOwner",
     "inputs": []
   },
@@ -1164,11 +1253,6 @@ export const bondsAbi = [
   {
     "type": "error",
     "name": "NotTheRightHour",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "NotTheSeller",
     "inputs": []
   },
   {
@@ -1211,6 +1295,11 @@ export const bondsAbi = [
         "internalType": "address"
       }
     ]
+  },
+  {
+    "type": "error",
+    "name": "SellerIsThisContract",
+    "inputs": []
   },
   {
     "type": "error",

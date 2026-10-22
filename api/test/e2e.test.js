@@ -154,7 +154,7 @@ test('a seller that answers keeps its money', async () => {
   const tampered = await api('POST', '/v1/verify', { agentId: 1, epoch, ref: deliveries[2].ref, digest: keccak256(toHex('a different file')), proof: [] });
   assert.equal(tampered.sealed, false, 'a delivery that was not sealed does not verify');
 
-  await jump(2 * HOUR + 60); // both hours the seller could seal in are final: claims open
+  await jump(8 * HOUR + 60); // both hours the seller could seal in are final (six hour window): claims open
 
   const quote = await api('POST', '/v1/claim', { agentId: 1, ref: deliveries[2].ref, from: BUYER.address });
   assert.equal(quote.amount, '100000000', 'the claim is for what was paid');
@@ -175,13 +175,16 @@ test('a seller that answers keeps its money', async () => {
   assert.equal(after.summary.open, 0);
   const bond = await api('GET', '/v1/bond/1');
   assert.equal(bond.reserved, '0');
-  assert.equal(bond.bonded, '502000000', "a claim on delivered work paid the seller the claimant's stake");
+  assert.equal(bond.bonded, '500000000', 'the bond is untouched');
+  const sellerOwed = await api('POST', '/v1/collect', { from: SELLER.address });
+  assert.equal(sellerOwed.owed, '2000000', "a claim on sealed work pays the seller the claimant's stake");
+  await sendAll(sellerOwed, SELLER);
 });
 
 test('a seller that goes quiet pays out', async () => {
   const ref = keccak256(toHex('paid-for-nothing'));
   await pay(ref, '100000000');
-  await jump(3 * HOUR + 120); // the hours pass with nothing sealed
+  await jump(9 * HOUR + 120); // the hours pass with nothing sealed
 
   await sendAll(await api('POST', '/v1/claim', { agentId: 1, ref, from: BUYER.address }), BUYER);
   const before = await api('GET', '/v1/bond/1');
@@ -211,7 +214,7 @@ test('a claim on a payment that never happened is refused', async () => {
 test("nobody can claim someone else's payment", async () => {
   const ref = keccak256(toHex('a buyers order'));
   await pay(ref, '1000000');
-  await jump(3 * HOUR + 120);
+  await jump(9 * HOUR + 120);
   await assert.rejects(
     () => api('POST', '/v1/claim', { agentId: 1, ref, from: SELLER.address }),
     /no payment from/

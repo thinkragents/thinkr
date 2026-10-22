@@ -142,55 +142,67 @@ async function run() {
   await sendAll(await api('POST', '/v1/bond', { agentId, amount: '10000000' }), SELLER);
   const small = await api('GET', `/v1/bond/${agentId}?amount=40000`);
   const big = await api('GET', `/v1/bond/${agentId}?amount=50000000`);
-  const tiny = await api('GET', `/v1/bond/${agentId}?amount=50000`);
-  log(`bond: ${small.bonded} posted; 4c call safeToPay=${small.safeToPay} claimable=${small.claimable}; $50 job safeToPay=${big.safeToPay}`);
+  log(`bond: ${small.bonded} posted; 4c payment covered=${small.covers}; $50 payment covered=${big.covers}`);
   assert.equal(small.safeToPay, true);
-  assert.equal(small.claimable, false, '4c is under the 10c floor of a $10 bond');
   assert.equal(big.safeToPay, false);
-  assert.equal(tiny.claimable, false);
   report.steps.bond = { bonded: small.bonded, safeSmall: small.safeToPay, safeBig: big.safeToPay };
 
-  // 4. deliveries in three evidence formats, during the current hour
+  // 4. the buyer pays twice through THINKR; each payment reserves its own cover
   const epoch = small.epoch;
+  const delivered = toRef('7f9c2ba4-e88f-4a3d-9b1c-2f0e5d6a8c11');
+  const silent = toRef(`paid-for-nothing-${regHash}`);
+  for (const ref of [delivered, silent]) await sendAll(await api('POST', '/v1/pay', { agentId, ref, amount: '1000000' }), BUYER);
+  const afterPay = await api('GET', `/v1/bond/${agentId}`);
+  log(`buyer paid $1 twice through THINKR; ${afterPay.reserved} of the bond is reserved for those payments`);
+  assert.equal(afterPay.reserved, '2000000');
+
+  // 5. the seller delivers one of them, plus other work, and seals the hour once it ends
   const deliveries = [
     { ref: toRef('fdd7f810499f06be24355ca8e2bfb8c4b965cc80c838f41fa074683443d89f5a'), digest: toDigest({ action: 'oracle.signal', scope: 'BTC' }) },
-    { ref: toRef('7f9c2ba4-e88f-4a3d-9b1c-2f0e5d6a8c11'), digest: toDigest('{"result":"dataset delivered"}') },
+    { ref: delivered, digest: toDigest('{"result":"dataset delivered"}') },
     { ref: toRef(regHash), digest: toDigest({ run: 1, ok: true }) },
   ];
-  log(`delivered 3 items in epoch ${epoch} (action_ref, UUID, tx hash)`);
-
-  // 5. seal the hour once it has ended
-  await until((epoch + 1) * HOUR + 30, `epoch ${epoch} to end so it can be sealed`);
+  await until((epoch + 1) * HOUR + 30, `hour ${epoch} to end so it can be sealed`);
   const sealed = await api('POST', '/v1/attest', { agentId, epoch, deliveries });
-  log(`seal quoted at ${sealed.cost.eth ?? 'n/a'} ETH (${sealed.cost.gas ?? '?'} gas)${sealed.cost.reason ? ` reason: ${sealed.cost.reason}` : ''}`);
+  log(`seal quoted at ${sealed.cost.eth ?? 'n/a'} ETH${sealed.cost.reason ? ` reason: ${sealed.cost.reason}` : ''}`);
   const sealSpent = await sendAll(sealed, SELLER);
   log(`seal actually cost ${formatEther(sealSpent)} ETH`);
-  report.steps.seal = { root: sealed.root, quotedWei: sealed.cost.wei, spentWei: sealSpent.toString() };
+  const verified = await api('POST', '/v1/verify', { agentId, epoch, ref: delivered, digest: deliveries[1].digest, deliveries });
+  assert.equal(verified.sealed, true);
+  log(`verify: the delivered order is sealed, at ${verified.sealedAt}`);
+  report.steps.seal = { root: sealed.root, quotedWei: sealed.cost.wei, spentWei: sealSpent.toString(), sealedAt: verified.sealedAt };
 
-  // 6. claims open once the seal window has closed
-  await until((epoch + 2) * HOUR + 30, `the seal window to close so claims can open`);
-  const claimA = await api('POST', '/v1/claim', { agentId, ref: deliveries[1].ref, epoch, amount: '1000000' });
+  // 6. the attacks, on the live chain: an invented payment, and someone else's payment
+  for (const [name, body] of [
+    ['invented payment', { agentId, ref: toRef('never paid'), from: BUYER.address }],
+    ["someone else's payment", { agentId, ref: delivered, from: SELLER.address }],
+  ]) {
+    let refused = null;
+    try { await api('POST', '/v1/claim', body); } catch (e) { refused = e.body?.error; }
+    assert.ok(refused, `${name} must be refused`);
+    log(`attack refused (${name}): "${refused.slice(0, 80)}…"`);
+  }
+
+  // 7. claims open once both hours a seller could seal in are final
+  await until((epoch + 8) * HOUR + 30, 'both seal windows (six hours each) to close so claims can open');
+  const claimA = await api('POST', '/v1/claim', { agentId, ref: delivered, from: BUYER.address });
   await sendAll(claimA, BUYER);
-  const claimB = await api('POST', '/v1/claim', { agentId, ref: toRef('paid-for-nothing'), epoch, amount: '1000000' });
+  const claimB = await api('POST', '/v1/claim', { agentId, ref: silent, from: BUYER.address });
   await sendAll(claimB, BUYER);
   const filed = await api('GET', `/v1/claims/${agentId}`);
+  if (filed.claims.length < 2) throw new Error(`the claims list came back with ${filed.claims.length} claims: ${JSON.stringify(filed)}`);
   const [idA, idB] = filed.claims.slice(-2).map((c) => c.claimId);
-  log(`filed claim ${idA} (was delivered) and ${idB} (was not), stake ${claimA.stake} each`);
+  log(`filed claim ${idA} (sealed) and ${idB} (never sealed), stake ${claimA.stake} each`);
 
-  // 7. the seller answers the one it can, and is refused on the one it cannot
-  await sendAll(await api('POST', `/v1/claim/${idA}/discharge`, { ref: deliveries[1].ref, deliveries }), SELLER);
+  // 8. the seller answers the one it sealed, and cannot answer the one it did not
+  await sendAll(await api('POST', `/v1/claim/${idA}/discharge`, { deliveries }), SELLER);
   let refused = null;
-  try {
-    await api('POST', `/v1/claim/${idB}/discharge`, { ref: toRef('paid-for-nothing'), deliveries });
-  } catch (e) {
-    refused = e.body?.error;
-  }
+  try { await api('POST', `/v1/claim/${idB}/discharge`, { deliveries }); } catch (e) { refused = e.body?.error; }
   assert.ok(refused, 'a claim with no sealed record must not be answerable');
-  log(`claim ${idA} answered with the sealed proof; claim ${idB} refused: "${refused}"`);
-  const mid = await api('GET', `/v1/claims/${agentId}`);
-  report.steps.claims = { idA, idB, summary: mid.summary, refused };
+  log(`claim ${idA} answered with the seal; claim ${idB} cannot be: "${refused.slice(0, 80)}…"`);
+  report.steps.claims = { idA, idB, summary: (await api('GET', `/v1/claims/${agentId}`)).summary };
 
-  const state = { agentId, idB, stake: claimB.stake, filedAt: await chainNow(), buyerBefore: (await pub.readContract({ address: env('THINKR_CURRENCY'), abi: tokenAbi, functionName: 'balanceOf', args: [BUYER.address] })).toString(), report };
+  const state = { agentId, idB, stake: claimB.stake, filedAt: await chainNow(), report };
   if (!FAST) {
     writeFileSync(RUN_FILE, JSON.stringify(state, null, 2));
     log(`state saved to ${RUN_FILE}; run with --settle after 48 hours`);
@@ -199,17 +211,20 @@ async function run() {
   return settle(state);
 }
 
-// 8. silence pays out
+// 9. silence pays out, and the buyer collects
 async function settle(state) {
   await until(state.filedAt + 48 * HOUR + 60, 'the 48 hour challenge window to pass');
   await sendAll(await api('POST', `/v1/claim/${state.idB}/settle`, {}), BUYER);
+  const before = await pub.readContract({ address: env('THINKR_CURRENCY'), abi: tokenAbi, functionName: 'balanceOf', args: [BUYER.address] });
+  const owed = await api('POST', '/v1/collect', { from: BUYER.address });
+  await sendAll(owed, BUYER);
   const after = await pub.readContract({ address: env('THINKR_CURRENCY'), abi: tokenAbi, functionName: 'balanceOf', args: [BUYER.address] });
-  const gained = after - BigInt(state.buyerBefore);
+  const gained = after - before;
   const bond = await api('GET', `/v1/bond/${state.agentId}`);
-  const claims = await api('GET', `/v1/claims/${state.agentId}`);
-  log(`claim ${state.idB} settled: buyer received ${gained} (claim + stake back); bond now ${bond.bonded}`);
-  assert.equal(gained, 1_000_000n + BigInt(state.stake), 'the claim plus the stake back');
-  state.report.steps.settle = { gained: gained.toString(), bondAfter: bond.bonded, summary: claims.summary };
+  log(`claim ${state.idB} settled and collected: buyer received ${gained} (payment + stake back); bond now ${bond.bonded}, reserved ${bond.reserved}`);
+  assert.equal(gained, 1_000_000n + BigInt(state.stake), 'the payment plus the stake back');
+  assert.equal(bond.reserved, '0', 'no cover left behind');
+  state.report.steps.settle = { gained: gained.toString(), bondAfter: bond.bonded };
   return state.report;
 }
 

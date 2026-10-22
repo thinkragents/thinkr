@@ -501,8 +501,13 @@ export async function buildClaim({ agentId: raw, ref, from }) {
   if (state === 2) throw new BadRequest('that payment has already been claimed');
   if (state === 3) throw new BadRequest('the claim period for this payment has ended');
 
-  const opens = (Number(epoch) + 3) * 3600; // both hours a seller may seal in are final
-  const closes = (Number(epoch) + 1) * 3600 + 24 * 3600;
+  // the contract's own clock, so the API can never disagree with it about the window
+  const [opensAt, closesAt] = await Promise.all([
+    client.readContract({ address: bonds, abi: bondsAbi, functionName: 'claimOpens', args: [epoch] }),
+    client.readContract({ address: bonds, abi: bondsAbi, functionName: 'claimCloses', args: [epoch] }),
+  ]);
+  const opens = Number(opensAt);
+  const closes = Number(closesAt);
   const now = Number(block.timestamp);
   if (now < opens) throw new BadRequest(`claims on this payment open at ${new Date(opens * 1000).toISOString()}, once the seller can no longer seal`);
   if (now > closes) throw new BadRequest('the claim period for this payment has ended');
@@ -573,15 +578,30 @@ export async function buildDischarge({ claimId, deliveries: list }) {
   };
 }
 
+/**
+ * Appoint a key to seal for your agent, so the owner key does not have to sign every
+ * hour. Void if the agent changes hands. Send address(0) to clear it.
+ */
+export async function buildSetSealer({ agentId: raw, sealer }) {
+  const id = agentId(raw);
+  const key = wallet(sealer, 'sealer');
+  const bonds = requireBonds();
+  return {
+    transactions: [tx(bonds, encodeFunctionData({ abi: bondsAbi, functionName: 'setSealer', args: [id, key] }), `let ${key} seal for agent ${id}`)],
+  };
+}
+
 /** Take what settled claims owe you. */
-export async function buildCollect({ from }) {
+export async function buildCollect({ from, to }) {
   const who = wallet(from, 'from');
+  const dest = to ? wallet(to, 'to') : who;
   const bonds = requireBonds();
   const owed = await client.readContract({ address: bonds, abi: bondsAbi, functionName: 'owed', args: [who] });
   if (owed === 0n) throw new BadRequest(`nothing is owed to ${who}`);
   return {
     owed: owed.toString(),
-    transactions: [tx(bonds, encodeFunctionData({ abi: bondsAbi, functionName: 'collect', args: [] }), 'collect what you are owed')],
+    to: dest,
+    transactions: [tx(bonds, encodeFunctionData({ abi: bondsAbi, functionName: 'collect', args: [dest] }), `collect what you are owed, to ${dest}`)],
   };
 }
 
@@ -597,7 +617,8 @@ export async function buildRelease(rawAgentId) {
     client.getBlock(),
   ]);
   const now = Number(block.timestamp);
-  const expired = events.filter((e) => now > (Number(e.args.epoch) + 1) * 3600 + 24 * 3600);
+  const period = Number(await client.readContract({ address: bonds, abi: bondsAbi, functionName: 'CLAIM_PERIOD' }));
+  const expired = events.filter((e) => now > (Number(e.args.epoch) + 1) * 3600 + period);
   const states = await Promise.all(
     expired.map((e) => client.readContract({ address: bonds, abi: bondsAbi, functionName: 'payments', args: [e.args.paymentId] }))
   );

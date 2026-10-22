@@ -29,7 +29,8 @@ const routes = [
   ['GET', '/v1/payments/:agentId', 'payments an agent took; add ?epoch= for one hour', ({ params, query }) =>
     h.listPayments(params.agentId, query.get('epoch') ?? undefined)],
   ['POST', '/v1/claim', 'file a claim on a payment you made through THINKR', ({ body }) => h.buildClaim(body)],
-  ['POST', '/v1/collect', 'collect what settled claims owe you', ({ body }) => h.buildCollect(body)],
+  ['POST', '/v1/collect', 'collect what you are owed, to yourself or another address', ({ body }) => h.buildCollect(body)],
+  ['POST', '/v1/sealer', 'appoint a key to seal for your agent', ({ body }) => h.buildSetSealer(body)],
   ['POST', '/v1/release/:agentId', "free a seller's cover held for expired payments", ({ params }) => h.buildRelease(params.agentId)],
   ['POST', '/v1/claim/:claimId/discharge', 'answer a claim with a proof', ({ params, body }) =>
     h.buildDischarge({ ...body, claimId: params.claimId })],
