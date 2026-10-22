@@ -17,13 +17,14 @@ export const CHAIN = {
 export const ADDRESSES = {
   // ERC-8004 identity registry, verified live on 4663 at the deterministic address.
   registry: process.env.THINKR_REGISTRY ?? '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432',
-  // ThinkrBonds. Set THINKR_BONDS once it is deployed.
-  bonds: process.env.THINKR_BONDS ?? null,
-  // Collateral token. Set at deploy time alongside the contract.
-  currency: process.env.THINKR_CURRENCY ?? null,
+    // ThinkrBonds on Robinhood Chain mainnet, deployed 2026-10-22. Overridable so the
+  // tests and the testnet rehearsal can point the same code at their own deploys.
+  bonds: process.env.THINKR_BONDS ?? '0xD5e4643e7E20c987a3da124b05a54cae57de9DDA',
+  // USDG, the collateral token it was deployed with.
+  currency: process.env.THINKR_CURRENCY ?? '0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168',
   // The block ThinkrBonds was deployed in. Claim history is read from events, and no
   // public RPC will search a hundred million blocks from genesis, so reads start here.
-  deployedAt: BigInt(process.env.THINKR_DEPLOYED_AT ?? 0),
+  deployedAt: BigInt(process.env.THINKR_DEPLOYED_AT ?? 94996670),
 };
 
 export class NotDeployed extends Error {

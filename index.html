@@ -248,7 +248,7 @@
 
         <p class="wire__lede">
           One read before the money moves. The same operations are available as a Claude
-          skill, an MCP server and a paid x402 endpoint.
+          skill, an MCP server you run yourself, and a plain HTTP API.
         </p>
 
         <dl class="where">
@@ -271,12 +271,12 @@
         </div>
         <div class="split__side">
         <div class="code">
-          <p class="code__k">MCP &#183; one line in your agent config</p>
-          <pre><code>{
-  "mcpServers": {
-    "thinkr": { "url": "https://mcp.thinkr.tech" }
-  }
-}</code></pre>
+          <p class="code__k">MCP &#183; runs locally, from the repo</p>
+          <pre><code>git clone https://github.com/thinkragents/thinkr
+cd thinkr && npm ci --prefix mcp && npm ci --prefix api && npm ci --prefix contracts/sdk
+
+{ "mcpServers": {
+    "thinkr": { "command": "node", "args": ["/path/to/thinkr/mcp/src/stdio.js"] } } }</code></pre>
         </div>
 
         <div class="code">
