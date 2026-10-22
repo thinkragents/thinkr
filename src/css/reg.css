@@ -91,3 +91,9 @@
 .reg__note a { color: var(--acid); border-bottom: var(--rule) solid color-mix(in srgb, var(--acid) 40%, transparent); }
 
 .mono { font-family: var(--f-mono); font-size: var(--t-mono); letter-spacing: var(--tr-mono); }
+
+.reg__paused {
+  margin: 0 0 calc(var(--sp) * 12); max-width: 70ch; color: var(--ink-2);
+  border-left: 2px solid var(--acid); padding: calc(var(--sp) * 2) 0 calc(var(--sp) * 2) calc(var(--sp) * 5);
+}
+.reg__paused b { color: var(--ink); font-weight: 600; }

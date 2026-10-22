@@ -244,7 +244,25 @@ export async function getAgentOwner(rawAgentId) {
 // ------------------------------------------------------------------ writes
 
 /** The two transactions that post a bond: approve the token, then bond it. */
+/**
+ * The first mainnet contract cannot tell a real payment from an invented one, so a
+ * claim on a payment that never happened pays out against an honest seller who has
+ * nothing to prove. Until version 2 records payments on chain, the API will not build
+ * a bond into it. Reads still work. The contract itself cannot be changed.
+ */
+const V1_UNSAFE_TO_BOND = '0xd5e4643e7e20c987a3da124b05a54cae57de9dda';
+
 export async function buildBond({ agentId: raw, amount: rawAmount }) {
+  if (ADDRESSES.bonds?.toLowerCase() === V1_UNSAFE_TO_BOND) {
+    const err = new Error(
+      'Bonding is paused. In this contract a claim on a payment that never happened cannot be ' +
+        'answered, so a bond could be claimed by anyone. Version 2 records payments on chain and ' +
+        'closes this; bond then. Nothing you have is affected.'
+    );
+    err.status = 423;
+    err.code = 'bonding_paused';
+    throw err;
+  }
   const id = agentId(raw);
   const value = amount(rawAmount, 'amount');
   const bonds = requireBonds();

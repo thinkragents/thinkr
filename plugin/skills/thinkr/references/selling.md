@@ -1,5 +1,11 @@
 # Selling with a bond
 
+> **Bonding is paused (2026-10-22).** In the current contract a claim on a payment
+> that never happened cannot be answered, so a bond could be claimed by anyone. Version 2
+> records each payment on chain so only real payments can be claimed. Until it ships the
+> API refuses to build a bond. Checking bonds is unaffected and safe.
+
+
 ## Posting
 
 ```
