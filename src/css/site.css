@@ -484,3 +484,23 @@ h2 em { font-style: normal; color: inherit; }
 .ways__cols { display: grid; gap: calc(var(--sp) * 12); grid-template-columns: 1fr; }
 @media (min-width: 980px) { .ways__cols { grid-template-columns: 1fr 1fr; column-gap: var(--col-1); } }
 .ways .run { margin: 0; max-width: none; }
+
+/* --- where the skill is listed: marks in a ruled grid, no tiles -------- */
+.venues { margin-top: calc(var(--sp) * 10); }
+.venues__list {
+  list-style: none; margin: 0; padding: 0;
+  display: grid; grid-template-columns: repeat(2, 1fr);
+  border-top: var(--rule) solid color-mix(in srgb, currentColor 14%, transparent);
+}
+@media (min-width: 560px) { .venues__list { grid-template-columns: repeat(3, 1fr); } }
+.venues__list li { border-bottom: var(--rule) solid color-mix(in srgb, currentColor 10%, transparent); }
+.venues__list a {
+  display: flex; align-items: center; gap: 12px;
+  padding: calc(var(--sp) * 4) calc(var(--sp) * 2) calc(var(--sp) * 4) 0;
+  font-family: var(--f-mono); font-size: var(--t-mono);
+  letter-spacing: var(--tr-mono); text-transform: uppercase; color: var(--ink-3);
+  transition: var(--tx) var(--t-fast) var(--ease);
+}
+.venues__list img { width: 20px; height: 20px; object-fit: contain; flex: none; opacity: 0.85; transition: opacity var(--t-fast) var(--ease); }
+.venues__list a:hover { color: var(--ink); }
+.venues__list a:hover img { opacity: 1; }
