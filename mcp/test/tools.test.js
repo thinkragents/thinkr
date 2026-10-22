@@ -22,11 +22,19 @@ test('every operation is exposed, and the read-only ones say so', async () => {
     'attest_deliveries',
     'check_bond',
     'check_claims',
+    'check_seals',
+    'collect_payout',
     'discharge_claim',
     'file_claim',
+    'list_payments',
+    'pay_agent',
     'post_bond',
+    'register_agent',
+    'release_cover',
     'settle_claim',
+    'verify_seal',
   ]);
+  assert.equal(tools.find((t) => t.name === 'verify_seal').annotations.readOnlyHint, true);
   assert.equal(tools.find((t) => t.name === 'check_bond').annotations.readOnlyHint, true);
   assert.equal(tools.find((t) => t.name === 'post_bond').annotations.readOnlyHint, false);
 });

@@ -21,6 +21,16 @@ export const bondsAbi = [
         "internalType": "uint128"
       },
       {
+        "name": "maxBond_",
+        "type": "uint128",
+        "internalType": "uint128"
+      },
+      {
+        "name": "minPayment_",
+        "type": "uint128",
+        "internalType": "uint128"
+      },
+      {
         "name": "minClaimBond_",
         "type": "uint128",
         "internalType": "uint128"
@@ -215,6 +225,11 @@ export const bondsAbi = [
         "name": "withdrawAfter",
         "type": "uint64",
         "internalType": "uint64"
+      },
+      {
+        "name": "noticeBy",
+        "type": "address",
+        "internalType": "address"
       }
     ],
     "stateMutability": "view"
@@ -253,6 +268,44 @@ export const bondsAbi = [
   },
   {
     "type": "function",
+    "name": "claimCloses",
+    "inputs": [
+      {
+        "name": "epoch",
+        "type": "uint64",
+        "internalType": "uint64"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "pure"
+  },
+  {
+    "type": "function",
+    "name": "claimOpens",
+    "inputs": [
+      {
+        "name": "epoch",
+        "type": "uint64",
+        "internalType": "uint64"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "pure"
+  },
+  {
+    "type": "function",
     "name": "claims",
     "inputs": [
       {
@@ -263,7 +316,7 @@ export const bondsAbi = [
     ],
     "outputs": [
       {
-        "name": "paymentId",
+        "name": "ref",
         "type": "bytes32",
         "internalType": "bytes32"
       },
@@ -274,6 +327,11 @@ export const bondsAbi = [
       },
       {
         "name": "claimant",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "seller",
         "type": "address",
         "internalType": "address"
       },
@@ -301,14 +359,16 @@ export const bondsAbi = [
         "name": "state",
         "type": "uint8",
         "internalType": "enum ThinkrBonds.ClaimState"
-      },
-      {
-        "name": "ref",
-        "type": "bytes32",
-        "internalType": "bytes32"
       }
     ],
     "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "collect",
+    "inputs": [],
+    "outputs": [],
+    "stateMutability": "nonpayable"
   },
   {
     "type": "function",
@@ -409,6 +469,19 @@ export const bondsAbi = [
   },
   {
     "type": "function",
+    "name": "maxBond",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint128",
+        "internalType": "uint128"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "minBond",
     "inputs": [],
     "outputs": [
@@ -435,11 +508,43 @@ export const bondsAbi = [
   },
   {
     "type": "function",
+    "name": "minPayment",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint128",
+        "internalType": "uint128"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "nextClaimId",
     "inputs": [],
     "outputs": [
       {
         "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "owed",
+    "inputs": [
+      {
+        "name": "account",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "amount",
         "type": "uint256",
         "internalType": "uint256"
       }
@@ -485,11 +590,6 @@ export const bondsAbi = [
         "internalType": "uint256"
       },
       {
-        "name": "buyer",
-        "type": "address",
-        "internalType": "address"
-      },
-      {
         "name": "ref",
         "type": "bytes32",
         "internalType": "bytes32"
@@ -526,6 +626,11 @@ export const bondsAbi = [
         "internalType": "address"
       },
       {
+        "name": "seller",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
         "name": "amount",
         "type": "uint128",
         "internalType": "uint128"
@@ -536,9 +641,9 @@ export const bondsAbi = [
         "internalType": "uint64"
       },
       {
-        "name": "claimed",
-        "type": "bool",
-        "internalType": "bool"
+        "name": "state",
+        "type": "uint8",
+        "internalType": "enum ThinkrBonds.PaymentState"
       }
     ],
     "stateMutability": "view"
@@ -555,6 +660,32 @@ export const bondsAbi = [
       }
     ],
     "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "release",
+    "inputs": [
+      {
+        "name": "paymentId",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "releaseMany",
+    "inputs": [
+      {
+        "name": "paymentIds",
+        "type": "bytes32[]",
+        "internalType": "bytes32[]"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
   },
   {
     "type": "function",
@@ -781,6 +912,25 @@ export const bondsAbi = [
   },
   {
     "type": "event",
+    "name": "Collected",
+    "inputs": [
+      {
+        "name": "account",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "amount",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
     "name": "Paid",
     "inputs": [
       {
@@ -824,6 +974,31 @@ export const bondsAbi = [
         "type": "uint64",
         "indexed": false,
         "internalType": "uint64"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "Released",
+    "inputs": [
+      {
+        "name": "paymentId",
+        "type": "bytes32",
+        "indexed": true,
+        "internalType": "bytes32"
+      },
+      {
+        "name": "agentId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "amount",
+        "type": "uint128",
+        "indexed": false,
+        "internalType": "uint128"
       }
     ],
     "anonymous": false
@@ -893,6 +1068,11 @@ export const bondsAbi = [
   },
   {
     "type": "error",
+    "name": "AboveMaximum",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "AlreadyClaimed",
     "inputs": []
   },
@@ -923,6 +1103,11 @@ export const bondsAbi = [
   },
   {
     "type": "error",
+    "name": "ChallengeWindowClosed",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "ChallengeWindowOpen",
     "inputs": []
   },
@@ -938,7 +1123,7 @@ export const bondsAbi = [
   },
   {
     "type": "error",
-    "name": "ClaimsOpen",
+    "name": "ClaimPeriodOpen",
     "inputs": []
   },
   {
@@ -968,7 +1153,27 @@ export const bondsAbi = [
   },
   {
     "type": "error",
+    "name": "NotReserved",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "NotThePayer",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "NotTheRightHour",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "NotTheSeller",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "NothingOwed",
     "inputs": []
   },
   {
@@ -1006,6 +1211,11 @@ export const bondsAbi = [
         "internalType": "address"
       }
     ]
+  },
+  {
+    "type": "error",
+    "name": "SellerLeaving",
+    "inputs": []
   }
 ];
 

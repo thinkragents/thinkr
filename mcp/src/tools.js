@@ -21,6 +21,44 @@ const delivery = z.object({
 
 export const tools = [
   {
+    name: 'check_seals',
+    title: "Read an agent's sealing record",
+    description:
+      'Before dealing with an unfamiliar agent: how many hours it has sealed, in the last 24 hours and ' +
+      '7 days, and when it last sealed. An agent that seals every hour it works is committing its ' +
+      'evidence in advance; one that never seals has nothing to show later.',
+    schema: { agentId },
+    run: ({ agentId: id }) => h.getSeals(id),
+    readOnly: true,
+  },
+  {
+    name: 'verify_seal',
+    title: 'Prove a delivery was sealed, and when',
+    description:
+      'Use when you need to show a delivery existed, unchanged, before a dispute. Send the agent, the ' +
+      'hour (epoch), the ref and digest, and either the proof or the full list sealed for that hour. ' +
+      'Returns sealed true or false, the root and when it was sealed. Does not trust the seller or THINKR.',
+    schema: {
+      agentId,
+      epoch: z.number().int().nonnegative(),
+      ref: hash32,
+      digest: hash32,
+      proof: z.array(hash32).optional(),
+      deliveries: z.array(delivery).optional(),
+    },
+    run: (args) => h.verifySeal(args),
+    readOnly: true,
+  },
+  {
+    name: 'register_agent',
+    title: 'Get an ERC-8004 agent id on Robinhood Chain',
+    description:
+      'For a seller with no agent id yet. Builds the one registry transaction; the wallet that sends ' +
+      'it owns the agent and the id is the tokenId in the receipt Transfer event.',
+    schema: { agentURI: z.string().describe('link to your agent card JSON') },
+    run: (args) => h.buildRegister(args),
+  },
+  {
     name: 'check_bond',
     title: 'Check an agent\'s bond before paying it',
     description:
@@ -48,9 +86,9 @@ export const tools = [
     title: 'Pay an agent through THINKR so the payment is on record',
     description:
       'Builds the transactions to pay a seller agent through THINKR. The money goes straight to the ' +
-      'seller in the same transaction; nothing is held. Only payments made this way can be claimed ' +
-      'later, so use this when you want the seller\'s bond behind the purchase. Keep the ref: the ' +
-      'seller seals its delivery under it and a claim names it.',
+      'seller in the same transaction; nothing is held. The same amount of its bond is reserved for ' +
+      'you until your claim window ends, so nobody else can take your cover. Refused when the free ' +
+      'bond cannot cover the payment or the seller is leaving. Keep the ref: a claim names it.',
     schema: {
       agentId,
       ref: hash32.describe('what both sides call this purchase, as 32 bytes'),
@@ -97,8 +135,8 @@ export const tools = [
     description:
       'For a payment you made through pay_agent. The amount and hour come from the payment record. ' +
       'Quotes your stake first (2% of the payment), then builds the transaction. If the seller proves ' +
-      'it delivered you lose the stake; if it stays quiet for 48 hours you get the stake back plus the ' +
-      'payment, out of its bond. Claims open two hours after the hour you paid in.',
+      'sealed a record of the payment you lose the stake; if it stays quiet for 48 hours, settle and ' +
+      'collect the payment plus your stake from its bond. Claims open two hours after the hour you paid in.',
     schema: {
       agentId,
       ref: hash32.describe('the ref you paid under'),
@@ -115,6 +153,22 @@ export const tools = [
       'would revert never goes out. The claimant\'s stake comes to you.',
     schema: { claimId: z.union([z.number().int().positive(), z.string()]), deliveries: z.array(delivery).min(1) },
     run: (args) => h.buildDischarge(args),
+  },
+  {
+    name: 'collect_payout',
+    title: 'Collect what settled claims owe you',
+    description: 'After a claim settles, the payment and your stake are owed to you; this builds the transaction to take them.',
+    schema: { from: z.string().describe('your address') },
+    run: (args) => h.buildCollect(args),
+  },
+  {
+    name: 'release_cover',
+    title: "Free a seller's cover held for expired payments",
+    description:
+      'Each payment reserves its amount of the seller bond until its claim window ends. A seller sends ' +
+      'this to free cover from payments nobody claimed, so it can take new payments.',
+    schema: { agentId },
+    run: ({ agentId: id }) => h.buildRelease(id),
   },
   {
     name: 'settle_claim',

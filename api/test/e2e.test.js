@@ -191,6 +191,14 @@ test('a seller that goes quiet pays out', async () => {
   const after = await api('GET', '/v1/bond/1');
   assert.equal(BigInt(before.bonded) - BigInt(after.bonded), 100000000n, 'the bond paid the claim');
   assert.equal((await api('GET', '/v1/claims/1')).summary.paid, 1);
+
+  // settled payouts are collected, so no address can ever jam a bond
+  const buyerBefore = await usdgBalance(BUYER.address);
+  const owed = await api('POST', '/v1/collect', { from: BUYER.address });
+  assert.equal(owed.owed, '102000000', 'the payment and the stake back');
+  await sendAll(owed, BUYER);
+  assert.equal(await usdgBalance(BUYER.address) - buyerBefore, 102000000n);
+  await assert.rejects(() => api('POST', '/v1/collect', { from: BUYER.address }), /nothing is owed/);
 });
 
 test('a claim on a payment that never happened is refused', async () => {
@@ -217,11 +225,23 @@ test('a discharge with the wrong delivery list is refused before it costs gas', 
   );
 });
 
-test('a claim larger than the bond is refused before it costs gas', async () => {
-  const ref = keccak256(toHex('big'));
-  await pay(ref, '450000000');
-  await jump(3 * HOUR + 120);
-  await assert.rejects(() => api('POST', '/v1/claim', { agentId: 1, ref, from: BUYER.address }), /will not cover/);
+test('a payment the bond cannot cover is refused before it costs gas', async () => {
+  await assert.rejects(
+    () => api('POST', '/v1/pay', { agentId: 1, ref: keccak256(toHex('big')), amount: '450000000' }),
+    /will not cover/
+  );
+});
+
+test('expired cover is released for the seller', async () => {
+  const ref = keccak256(toHex('delivered, never claimed'));
+  await pay(ref, '5000000');
+  const held = await api('GET', '/v1/bond/1');
+  await jump(26 * HOUR);
+  const r = await api('POST', '/v1/release/1');
+  assert.ok(r.released >= 1);
+  await sendAll(r, SELLER);
+  const freed = await api('GET', '/v1/bond/1');
+  assert.ok(BigInt(freed.reserved) < BigInt(held.reserved), 'the cover came back');
 });
 
 test('bad input is rejected with a reason, not a stack trace', async () => {

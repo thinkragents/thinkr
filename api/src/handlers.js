@@ -290,7 +290,7 @@ export async function getClaims(rawAgentId, { fromBlock = ADDRESSES.deployedAt }
 export async function getClaim(rawClaimId) {
   const id = agentId(rawClaimId);
   const bonds = requireBonds();
-  const [paymentId, agent, claimant, amt, claimBond, epoch, filedAt, state, ref] = await client.readContract({
+  const [ref, agent, claimant, seller, amt, claimBond, epoch, filedAt, state] = await client.readContract({
     address: bonds,
     abi: bondsAbi,
     functionName: 'claims',
@@ -301,8 +301,8 @@ export async function getClaim(rawClaimId) {
     claimId: id.toString(),
     agentId: agent.toString(),
     claimant,
+    seller,
     ref,
-    paymentId,
     amount: amt.toString(),
     claimBond: claimBond.toString(),
     epoch: Number(epoch),
@@ -437,6 +437,8 @@ export async function buildPay({ agentId: raw, ref, amount: rawAmount }) {
   const value = amount(rawAmount, 'amount');
   const bonds = requireBonds();
   const bond = await getBond(id, value);
+  if (bond.status === 'winding_down') throw new BadRequest(`agent ${id} has given notice to leave, so THINKR will not take payments for it. Pay it directly if you choose, without cover.`);
+  if (!bond.covers) throw new BadRequest(`agent ${id} has ${bond.available} of bond free, which will not cover a payment of ${value}. Pay less, or pay it directly without cover.`);
   return {
     bond: { bonded: bond.bonded, available: bond.available, status: bond.status, covers: bond.covers, safeToPay: bond.safeToPay },
     note: 'Keep the ref: the seller seals its delivery under it, and a claim names it.',
@@ -488,29 +490,29 @@ export async function buildClaim({ agentId: raw, ref, from }) {
   const buyer = wallet(from, 'from');
   const bonds = requireBonds();
 
-  const paymentId = await client.readContract({ address: bonds, abi: bondsAbi, functionName: 'paymentIdOf', args: [id, buyer, r] });
-  const [[, payer, value, epoch, claimed], free, block] = await Promise.all([
+  const paymentId = await client.readContract({ address: bonds, abi: bondsAbi, functionName: 'paymentIdOf', args: [id, r] });
+  const [[, payer, , value, epoch, state], block] = await Promise.all([
     client.readContract({ address: bonds, abi: bondsAbi, functionName: 'payments', args: [paymentId] }),
-    client.readContract({ address: bonds, abi: bondsAbi, functionName: 'available', args: [id] }),
     client.getBlock(),
   ]);
-  if (payer === '0x0000000000000000000000000000000000000000') {
-    throw new BadRequest(`there is no payment from ${buyer} to agent ${id} under that ref. Only payments made through THINKR's pay call can be claimed.`);
+  if (state === 0 || payer.toLowerCase() !== buyer.toLowerCase()) {
+    throw new BadRequest(`there is no payment from ${buyer} to agent ${id} under that ref. Only payments made through THINKR's pay call can be claimed, by the address that paid.`);
   }
-  if (claimed) throw new BadRequest('that payment has already been claimed');
+  if (state === 2) throw new BadRequest('that payment has already been claimed');
+  if (state === 3) throw new BadRequest('the claim period for this payment has ended');
 
   const opens = (Number(epoch) + 3) * 3600; // both hours a seller may seal in are final
-  const closes = (Number(epoch) + 1) * 3600 + 7 * 24 * 3600;
+  const closes = (Number(epoch) + 1) * 3600 + 24 * 3600;
   const now = Number(block.timestamp);
   if (now < opens) throw new BadRequest(`claims on this payment open at ${new Date(opens * 1000).toISOString()}, once the seller can no longer seal`);
   if (now > closes) throw new BadRequest('the claim period for this payment has ended');
-  if (value > free) throw new BadRequest(`that agent has ${free} unreserved, which will not cover this payment of ${value}`);
+  // the payment reserved its own cover when it was made, so there is nothing else to check
 
   const stake = await client.readContract({ address: bonds, abi: bondsAbi, functionName: 'claimBondFor', args: [value] });
   return {
     amount: value.toString(),
     stake: stake.toString(),
-    stakeNote: 'You lose this if the seller proves it delivered. You get it back, plus the payment, if it does not answer within 48 hours.',
+    stakeNote: 'You lose this if the seller proves it sealed a record of this payment. If it does not answer within 48 hours, settle the claim and collect the payment plus your stake.',
     transactions: [
       tx(
         ADDRESSES.currency,
@@ -568,6 +570,42 @@ export async function buildDischarge({ claimId, deliveries: list }) {
         'prove the delivery and close the claim'
       ),
     ],
+  };
+}
+
+/** Take what settled claims owe you. */
+export async function buildCollect({ from }) {
+  const who = wallet(from, 'from');
+  const bonds = requireBonds();
+  const owed = await client.readContract({ address: bonds, abi: bondsAbi, functionName: 'owed', args: [who] });
+  if (owed === 0n) throw new BadRequest(`nothing is owed to ${who}`);
+  return {
+    owed: owed.toString(),
+    transactions: [tx(bonds, encodeFunctionData({ abi: bondsAbi, functionName: 'collect', args: [] }), 'collect what you are owed')],
+  };
+}
+
+/**
+ * Free a seller's cover held for payments whose claim window ended unclaimed. Anyone may
+ * send it; it only ever releases what the contract agrees has expired.
+ */
+export async function buildRelease(rawAgentId) {
+  const id = agentId(rawAgentId);
+  const bonds = requireBonds();
+  const [events, block] = await Promise.all([
+    eventsSince(ADDRESSES.deployedAt, { address: bonds, abi: bondsAbi, eventName: 'Paid', args: { agentId: id } }),
+    client.getBlock(),
+  ]);
+  const now = Number(block.timestamp);
+  const expired = events.filter((e) => now > (Number(e.args.epoch) + 1) * 3600 + 24 * 3600);
+  const states = await Promise.all(
+    expired.map((e) => client.readContract({ address: bonds, abi: bondsAbi, functionName: 'payments', args: [e.args.paymentId] }))
+  );
+  const ids = expired.filter((_, i) => states[i][5] === 1).map((e) => e.args.paymentId);
+  if (ids.length === 0) return { released: 0, note: 'no cover is waiting to be released', transactions: [] };
+  return {
+    released: ids.length,
+    transactions: [tx(bonds, encodeFunctionData({ abi: bondsAbi, functionName: 'releaseMany', args: [ids] }), `release cover held for ${ids.length} expired payments`)],
   };
 }
 
