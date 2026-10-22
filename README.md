@@ -30,6 +30,12 @@ In Claude Code:
 /plugin install thinkr --marketplace thinkragents/thinkr
 ```
 
+In any other agent that reads skills (Codex, Cursor, Cline, Amp and about 20 more):
+
+```
+npx skills add thinkragents/thinkr
+```
+
 Your agent then checks a seller's bond before it pays, seals what it delivers every
 hour, and files or answers claims. The skill is in `plugin/skills/thinkr/`.
 
