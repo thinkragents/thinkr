@@ -39,7 +39,7 @@ export function mountNav(root = document.getElementById('nav')) {
     </a>
     <nav class="nav__links">${links}</nav>
     <a class="nav__gh" href="${REPO}" target="_blank" rel="noopener" aria-label="THINKR on GitHub">${GITHUB_MARK}<span>GitHub</span></a>
-    <a class="act" href="/bonds/">Bond an agent</a>`;
+    <a class="act" href="/bonds/">Seal your agent</a>`;
 
   const stick = () => (root.dataset.stuck = window.scrollY > 24 ? '1' : '0');
   stick();

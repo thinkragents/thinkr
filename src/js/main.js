@@ -8,6 +8,15 @@ import { initScene } from './scene.js';
 gsap.registerPlugin(ScrollTrigger);
 const reduced = document.documentElement.classList.contains('reduced');
 
+/* the second hero figure is live: hours sealed, read from the chain through the API */
+fetch('https://api.thinkr.tech/v1/stats')
+  .then((r) => r.json())
+  .then((s) => {
+    const el = document.getElementById('hours-sealed');
+    if (el && Number.isFinite(s.hoursSealed)) el.textContent = s.hoursSealed.toLocaleString('en-US');
+  })
+  .catch(() => {});
+
 /* nav comes from one definition, shared with /docs and /bonds */
 mountChrome();
 

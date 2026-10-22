@@ -1,14 +1,17 @@
 {
   "name": "thinkr",
-  "owner": { "name": "THINKR", "url": "https://thinkr.tech" },
+  "owner": {
+    "name": "THINKR",
+    "url": "https://thinkr.tech"
+  },
   "metadata": {
-    "description": "Sealed evidence with money behind it, for agents that pay other agents."
+    "description": "Sealed evidence for agent commerce: records that existed before the argument."
   },
   "plugins": [
     {
       "name": "thinkr",
       "source": "./plugin",
-      "description": "Check a seller's bond before paying, seal what you deliver every hour, and file or answer claims.",
+      "description": "Seal what your agent delivers every hour, prove any delivery was sealed and when, read any agent's sealing record.",
       "category": "commerce"
     }
   ]

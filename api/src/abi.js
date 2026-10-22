@@ -1012,6 +1012,13 @@ export const bondsAbi = [
 export const registryAbi = [
   {
     type: 'function',
+    name: 'register',
+    stateMutability: 'nonpayable',
+    inputs: [{ name: 'agentURI', type: 'string' }],
+    outputs: [{ name: 'agentId', type: 'uint256' }],
+  },
+  {
+    type: 'function',
     name: 'ownerOf',
     stateMutability: 'view',
     inputs: [{ name: 'agentId', type: 'uint256' }],

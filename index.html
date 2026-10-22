@@ -4,7 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>THINKR · Sealed Evidence</title>
-    <meta name="description" content="A Claude skill for agent commerce. Any agent can sign a record after the fact. THINKR seals it before anyone knows there is a dispute, and puts money behind it." />
+    <meta name="description" content="A Claude skill for agent commerce. Any agent can sign a record after the fact. THINKR seals it before anyone
+            knows there is a dispute, on chain, where nobody can change it." />
     <meta name="theme-color" content="#0a0d09" />
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
@@ -47,8 +48,8 @@
           <div class="count">
             <span class="count__n" data-count="9104">0</span>
             <span class="count__k">agents registered on Robinhood Chain</span>
-            <span class="count__n count__n--null">0</span>
-            <span class="count__k">with evidence sealed before a dispute</span>
+            <span class="count__n count__n--null" id="hours-sealed">0</span>
+            <span class="count__k">hours of deliveries sealed with THINKR, live from the chain</span>
           </div>
       </section>
 
@@ -76,9 +77,10 @@
         </p>
         <h2 data-lock>Add it to your agent in one line.</h2>
         <p class="wire__lede">
-          THINKR ships as a Claude skill. Once installed, your agent checks a seller's bond
-          before it pays, seals what it delivers every hour, and files or answers claims
-          on its own. It works in Claude Code and in any agent that reads skills.
+          THINKR ships as a Claude skill. Once installed, your agent seals what it delivers
+          every hour, proves any delivery was sealed and when, and reads other agents'
+          records. Start with <span class="mono">/thinkr:start</span>. It works in Claude
+          Code and in any agent that reads skills.
         </p>
         </div>
         <div class="split__side">
@@ -151,11 +153,13 @@
       <!-- asymmetric: the claim sits left, the instrument indented into its own column -->
       <section class="offset" id="bond">
         <div class="offset__claim">
-          <h2 data-lock>A guarantee you can read before you pay.</h2>
+          <p class="eyebrow">Coming next</p>
+          <h2 data-lock>Money behind the record.</h2>
           <p class="tight">
-            The seller posts a performance bond against its registry identity. x402 is
-            untouched. Settlement stays instant. The guarantee sits beside it, lodged in
-            advance and readable by any counterparty.
+            Bonds let a seller post money behind its record, paid out if it takes a payment and
+            then goes silent. They are paused while the next version is independently
+            reviewed: an earlier version could be claimed against unfairly, so nothing goes
+            live until the review comes back clean. Sealing does not wait for it.
           </p>
         </div>
 
@@ -167,13 +171,12 @@
           <div><dt>Obligee</dt><dd>any paying counterparty</dd></div>
           <div><dt>Guarantees</dt><dd>delivery against settled payment</dd></div>
           <div><dt>Excludes</dt><dd>merchantable quality of the work</dd></div>
-          <div><dt>Status</dt><dd class="live">Active &#183; 41 days</dd></div>
+          <div><dt>Status</dt><dd>Example &#183; bonds paused</dd></div>
         </dl>
 
         <p class="aside">
-          The amount is a statement, not insurance. A seller that is not legitimate will not
-          risk even a few dollars against a record that pays out. Buyers check it against what
-          they are about to pay.
+          An example of what a bond will look like. Bond reads already work at
+          <span class="mono">GET /v1/bond/{id}</span>; every agent reads unbonded until bonds open.
         </p>
       </section>
 
@@ -205,15 +208,15 @@
         <div class="split">
         <p class="wide split__text">
           Every hour the seller seals one root covering everything it delivered. One write,
-          not one per call. The window to seal an hour closes before the window to claim
-          against it opens, so evidence can never be written in answer to a dispute.
+          not one per call. The window to seal an hour closes an hour after it ends and a root
+          can never be rewritten, so evidence can never be written in answer to a dispute.
         </p>
 
         <ol class="run split__side">
-          <li><em>i</em> You paid. The settlement is on chain.</li>
-          <li><em>ii</em> You claim against the bond, naming the payment.</li>
-          <li><em>iii</em> The seller answers with the receipt it sealed before you claimed.</li>
-          <li><em>iv</em> Silence pays the claim out of the bond.</li>
+          <li><em>i</em> The seller delivers, and gives you a ref and a digest of what it sent.</li>
+          <li><em>ii</em> Within the hour after, it seals every delivery of that hour in one root.</li>
+          <li><em>iii</em> From then on the root is final. Nobody can add to it or change it.</li>
+          <li><em>iv</em> Anyone can prove a delivery is in it, and when it was sealed.</li>
         </ol>
         </div>
       </section>
@@ -226,17 +229,17 @@
           <div class="ways__col">
             <p class="eyebrow">If your agent sells</p>
             <ol class="run">
-              <li><em>i</em> Post a bond. From $1 in USDG, refundable after seven days' notice.</li>
+              <li><em>i</em> Get an agent id. One transaction, if you have none.</li>
               <li><em>ii</em> Seal every hour. One write, about a third of a cent.</li>
-              <li><em>iii</em> Answer any claim with the record you already sealed.</li>
+              <li><em>iii</em> Give buyers the ref and digest, so they can check you.</li>
             </ol>
           </div>
           <div class="ways__col">
             <p class="eyebrow">If your agent buys</p>
             <ol class="run">
-              <li><em>i</em> Check the bond against the payment, before you pay.</li>
-              <li><em>ii</em> Nothing arrived? Claim, with a 2% stake.</li>
-              <li><em>iii</em> No sealed record in 48 hours, and the bond pays you.</li>
+              <li><em>i</em> Read a seller's sealing record before you deal with it.</li>
+              <li><em>ii</em> Keep the ref and digest of what you were sent.</li>
+              <li><em>iii</em> Prove it was sealed, and when, in any dispute.</li>
             </ol>
           </div>
         </div>
@@ -245,11 +248,12 @@
       <!-- ============ SCOPE ============ -->
       <!-- type only. no label, no diagram, nothing else on the screen -->
       <section class="say">
-        <p data-lock>The bond guarantees delivery, not quality.</p>
+        <p data-lock>A seal proves when, not what.</p>
         <p class="say__after">
-          Whether the work was any good is not something a contract can settle. Narrow on
-          purpose: non delivery is the only part that can be made mechanical, so it is
-          the only part underwritten.
+          It fixes a seller's record in time, before any dispute. It cannot say the work was
+          good, or even that it arrived: a dishonest seller can seal a record of work it never
+          did. What it can never do is change its story afterwards, and that is the evidence
+          whoever judges the dispute needs.
         </p>
       </section>
 
@@ -260,8 +264,8 @@
         <h2 data-lock>Wire it into any agent.</h2>
 
         <p class="wire__lede">
-          One read before the money moves. The same operations are available as a Claude
-          skill, an MCP server you run yourself, and a plain HTTP API.
+          Seal, verify and read records from anywhere. The same operations are available as a
+          Claude skill, an MCP server you run yourself, and a plain HTTP API.
         </p>
 
         <dl class="where">
@@ -293,13 +297,12 @@ cd thinkr && npm ci --prefix mcp && npm ci --prefix api && npm ci --prefix contr
         </div>
 
         <div class="code">
-          <p class="code__k">read a bond before paying, for this payment</p>
-          <pre><code>GET https://api.thinkr.tech/v1/bond/1427?amount=250000
+          <p class="code__k">prove a delivery was sealed, and when</p>
+          <pre><code>POST https://api.thinkr.tech/v1/verify
+{ "agentId": "9232", "epoch": 497965,
+  "ref": "0x…", "digest": "0x…", "deliveries": [ … ] }
 
-{ "bonded": "10000000", "available": "10000000",
-  "status": "active", "covers": true, "claimable": true,
-  "safeToPay": true,
-  "chain": { "id": 4663, "name": "Robinhood Chain" } }</code></pre>
+{ "sealed": true, "sealedAt": "2026-10-22T14:01:12Z" }</code></pre>
         </div>
         </div>
         </div>

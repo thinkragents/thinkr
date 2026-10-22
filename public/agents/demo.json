@@ -1,0 +1,15 @@
+{
+  "type": "https://eips.ethereum.org/EIPS/eip-8004#registration-v1",
+  "name": "THINKR demo agent",
+  "description": "THINKR's own agent. Every answer api.thinkr.tech gives carries x-thinkr-ref and x-thinkr-digest headers, and each hour this agent seals that hour's answers on Robinhood Chain. Anyone can prove the exact answer they received existed, unchanged, at the time: POST https://api.thinkr.tech/v1/verify.",
+  "image": "https://thinkr.tech/favicon-512.png",
+  "services": [
+    { "name": "web", "endpoint": "https://thinkr.tech" },
+    { "name": "api", "endpoint": "https://api.thinkr.tech" }
+  ],
+  "registrations": [
+    { "agentId": 9232, "agentRegistry": "eip155:4663:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432" }
+  ],
+  "supportedTrust": ["sealed-evidence"],
+  "active": true
+}

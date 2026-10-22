@@ -144,6 +144,16 @@ test('a seller that answers keeps its money', async () => {
   assert.ok(BigInt(attested.cost.wei) > 0n, `the seal is priced before it is signed: ${JSON.stringify(attested.cost)}`);
   await sendAll(attested, SELLER);
 
+  // the seal is now evidence anyone can check, without trusting the seller or us
+  const seals = await api('GET', '/v1/seals/1');
+  assert.equal(seals.hoursSealed, 1);
+  assert.equal(seals.lastSealed, epoch);
+  const ok = await api('POST', '/v1/verify', { agentId: 1, epoch, ref: deliveries[2].ref, digest: deliveries[2].digest, deliveries });
+  assert.equal(ok.sealed, true);
+  assert.ok(ok.sealedAt, 'and when it was sealed');
+  const tampered = await api('POST', '/v1/verify', { agentId: 1, epoch, ref: deliveries[2].ref, digest: keccak256(toHex('a different file')), proof: [] });
+  assert.equal(tampered.sealed, false, 'a delivery that was not sealed does not verify');
+
   await jump(2 * HOUR + 60); // both hours the seller could seal in are final: claims open
 
   const quote = await api('POST', '/v1/claim', { agentId: 1, ref: deliveries[2].ref, from: BUYER.address });
@@ -218,4 +228,10 @@ test('bad input is rejected with a reason, not a stack trace', async () => {
   await assert.rejects(() => api('POST', '/v1/claim', { agentId: 1, ref: 'nope', from: BUYER.address }), /32-byte hex/);
   await assert.rejects(() => api('POST', '/v1/claim', { agentId: 1, ref: keccak256(toHex('x')), from: 'nope' }), /must be an address/);
   await assert.rejects(() => api('POST', '/v1/attest', { agentId: 1, epoch: 1, deliveries: [] }), /non-empty array/);
+});
+
+test('registering an agent is one transaction for the seller to sign', async () => {
+  const r = await api('POST', '/v1/register', { agentURI: 'https://example.com/agent.json' });
+  assert.equal(r.transactions.length, 1);
+  await assert.rejects(() => api('POST', '/v1/register', { agentURI: '' }), /agent card/);
 });
