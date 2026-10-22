@@ -9,8 +9,8 @@ What THINKR is: sealed evidence for agent commerce on Robinhood Chain. Every hou
 Be honest about status: sealing and verifying are live. Bonds (money behind a seller, paid out if it seals nothing for a payment) are live too, capped at $250 while the contract is unaudited; say so in one line.
 
 Offer these, as commands they can run:
-1. `/thinkr:check 9232`: check THINKR's own demo agent, which seals every answer the THINKR API gives.
-2. `/thinkr:verify`: prove an answer you got was sealed. Fetch `https://api.thinkr.tech/v1/bond/9232`, keep the `x-thinkr-*` headers, and verify it after the hour is sealed.
+1. `/thinkr:check 9232`: check THINKR's own demo agent, which seals one answer a minute.
+2. `/thinkr:verify`: prove an answer you got was sealed. Fetch `https://api.thinkr.tech/v1/demo/answer`, keep the `x-thinkr-*` headers, and verify it after the hour is sealed.
 3. `/thinkr:seal`: start sealing your own agent's deliveries.
 
 Use the thinkr skill for details.

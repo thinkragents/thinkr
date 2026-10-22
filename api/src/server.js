@@ -16,7 +16,7 @@ const routes = [
   ['GET', '/v1/bonds', 'every agent ever bonded, with its bond now', () => h.listBonds()],
   ['GET', '/v1/demo/deliveries/:epoch', "the answers THINKR's demo agent sealed in an hour", ({ params }) =>
     demo.deliveriesFor(params.epoch)],
-    ['GET', '/v1/stats', 'hours sealed and agents sealing, network wide', () => h.getStats()],
+  ['GET', '/v1/stats', 'hours sealed and agents sealing, network wide', () => h.getStats()],
   ['GET', '/v1/seals/:agentId', 'how many hours an agent has sealed, and when', ({ params }) => h.getSeals(params.agentId)],
   ['POST', '/v1/verify', 'was this delivery sealed, and when', ({ body }) => h.verifySeal(body)],
   ['POST', '/v1/register', 'register an agent in the ERC-8004 registry', ({ body }) => h.buildRegister(body)],
@@ -50,21 +50,22 @@ const index = {
   chain: { id: CHAIN.id, name: CHAIN.name, explorer: CHAIN.explorer },
   contracts: { registry: ADDRESSES.registry, bonds: ADDRESSES.bonds, currency: ADDRESSES.currency },
   priced: pricingEnabled,
-  endpoints: routes.map((r) => ({ method: r.method, path: r.path, summary: r.summary })),
+  endpoints: [
+    { method: 'GET', path: '/v1/demo/answer', summary: "THINKR's demo agent: this minute's answer, sealed when the hour ends" },
+    ...routes.map((r) => ({ method: r.method, path: r.path, summary: r.summary })),
+  ],
   source: 'https://github.com/thinkragents/thinkr',
 };
 
-function send(res, status, body, { seal = false } = {}) {
-  const payload = JSON.stringify(body, null, 2);
-  // THINKR's demo agent seals the answers it gives; the headers say how to find them
-  const sealed = seal && status === 200 ? demo.record(payload) : {};
+function send(res, status, body, { raw, sealed = {} } = {}) {
+  const payload = raw ?? JSON.stringify(body, null, 2);
   res.writeHead(status, {
     'content-type': 'application/json; charset=utf-8',
     'content-length': Buffer.byteLength(payload),
     'access-control-allow-origin': '*',
     'access-control-allow-headers': 'content-type, x-payment',
     'access-control-expose-headers': 'x-thinkr-agent, x-thinkr-epoch, x-thinkr-ref, x-thinkr-digest',
-    'cache-control': status === 200 && !sealed['x-thinkr-ref'] ? 'public, max-age=5' : 'no-store',
+    'cache-control': sealed['x-thinkr-ref'] ? 'no-store' : status === 200 ? 'public, max-age=5' : 'no-store',
     ...sealed,
   });
   res.end(payload);
@@ -90,6 +91,12 @@ export const server = createServer(async (req, res) => {
   if (req.method === 'OPTIONS') return send(res, 204, {});
   if (url.pathname === '/' || url.pathname === '/v1') return send(res, 200, index);
   if (url.pathname === '/health') return send(res, 200, { ok: true });
+  // THINKR's demo agent: this minute's answer, sealed when the hour ends
+  if (req.method === 'GET' && url.pathname === '/v1/demo/answer') {
+    const a = demo.answer();
+    if (!a) return send(res, 503, { error: 'the demo agent is not running on this server', code: 'demo_off' });
+    return send(res, 200, null, { raw: a.body, sealed: a.headers });
+  }
 
   const route = routes.find((r) => r.method === req.method && r.pattern.test(url.pathname));
   if (!route) return send(res, 404, { error: 'no such endpoint', code: 'not_found', see: '/' });
@@ -101,9 +108,7 @@ export const server = createServer(async (req, res) => {
 
   try {
     const body = req.method === 'POST' ? await readBody(req) : {};
-    send(res, 200, await route.handler({ params, body, query: url.searchParams }), {
-      seal: req.method === 'GET' && !url.pathname.startsWith('/v1/demo'),
-    });
+    send(res, 200, await route.handler({ params, body, query: url.searchParams }));
   } catch (err) {
     const status = err.status ?? (err instanceof NotDeployed ? 503 : 500);
     if (status === 500) console.error(err);

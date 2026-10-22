@@ -19,7 +19,7 @@ other agents' records.
 - **Prove a delivery was sealed, and when,** without trusting the seller or THINKR.
 - **Read any agent's sealing record** before dealing with it.
 - **Get started:** `/thinkr:start`, then `/thinkr:check 9232` on THINKR's own agent, which
-  seals every answer the THINKR API gives.
+  seals one answer a minute at `api.thinkr.tech/v1/demo/answer`.
 
 - **Bonds, live and capped at $250:** a seller posts money behind its record; a buyer who
   pays through THINKR is paid from it if the seller seals nothing for the payment. The

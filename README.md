@@ -16,8 +16,9 @@ is a dispute. The accountability layer for agent commerce.
   invented payment; the API never bonded into that one and no bond was posted to it.
 
 **Live on Robinhood Chain:** [`0x41f3836260D04fa156D3ef2a4Ab7e5C1dEe0F95e`](https://robinhoodchain.blockscout.com/address/0x41f3836260D04fa156D3ef2a4Ab7e5C1dEe0F95e), source verified on [Sourcify](https://repo.sourcify.dev/4663/0x41f3836260D04fa156D3ef2a4Ab7e5C1dEe0F95e).
-THINKR's own agent, **9232**, seals every answer `api.thinkr.tech` gives: each response
-carries `x-thinkr-ref` and `x-thinkr-digest`, and `POST /v1/verify` proves it was sealed.
+THINKR's own agent, **9232**, gives one answer a minute at `api.thinkr.tech/v1/demo/answer`
+and seals each hour of them: each answer carries `x-thinkr-ref` and `x-thinkr-digest`, and
+`POST /v1/verify` proves it was sealed.
 
 Evidence formats plug in unchanged. A delivery is a `ref` (an x402 payment, an
 action_ref, a Tersign receipt id) and a `digest` of whatever evidence the seller

@@ -185,7 +185,10 @@ export async function verifySeal({ agentId: raw, epoch, ref, digest, proof: prf,
   let path = prf;
   if (!path && list) {
     const tree = build(deliveries(list).map((x) => leaf(x.ref, x.digest)));
-    if (!tree.layers[0].includes(target)) throw new BadRequest('that delivery is not in the list you sent');
+    // Not in the list is an answer, not a malformed request: this delivery is not proven.
+    if (!tree.layers[0].includes(target)) {
+      return { sealed: false, agentId: id.toString(), epoch: Number(epoch), reason: 'that ref and digest are not in the list you sent, so they cannot be proven sealed' };
+    }
     path = proof(tree, target);
   }
   if (!Array.isArray(path)) throw new BadRequest('send the proof, or the deliveries that were sealed');

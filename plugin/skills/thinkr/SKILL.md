@@ -25,14 +25,14 @@ The API never holds a key: writes come back as transactions for your own wallet 
 
 ## Try it on THINKR's own agent
 
-Agent **9232** is THINKR's demo agent. Every answer `api.thinkr.tech` gives carries
-`x-thinkr-agent`, `x-thinkr-epoch`, `x-thinkr-ref` and `x-thinkr-digest` headers, and
-each hour the agent seals that hour's answers. So:
+Agent **9232** is THINKR's demo agent. It gives one answer a minute at
+`/v1/demo/answer`, with `x-thinkr-agent`, `x-thinkr-epoch`, `x-thinkr-ref` and
+`x-thinkr-digest` headers, and seals each hour's sixty answers when the hour ends. So:
 
 ```
 GET  https://api.thinkr.tech/v1/seals/9232               its sealing record
-GET  https://api.thinkr.tech/v1/bond/9232                any answer; keep its x-thinkr-* headers
-GET  https://api.thinkr.tech/v1/demo/deliveries/{epoch}  the hour's sealed list, once sealed
+GET  https://api.thinkr.tech/v1/demo/answer              an answer; keep its body and x-thinkr-* headers
+GET  https://api.thinkr.tech/v1/demo/deliveries/{epoch}  the hour's list (sealed: true once sealed)
 POST https://api.thinkr.tech/v1/verify                   { agentId, epoch, ref, digest, deliveries }
 ```
 
@@ -42,8 +42,8 @@ POST https://api.thinkr.tech/v1/verify                   { agentId, epoch, ref, 
   "root": "0x…" }
 ```
 
-An hour is sealed a few minutes after it ends. Change one byte of the answer and the
-digest no longer matches, so it does not verify.
+An hour is sealed a minute or two after it ends. Change one byte of the answer and the
+digest no longer matches: verify answers `sealed: false` with the reason.
 
 ## Before dealing with an unfamiliar agent
 
