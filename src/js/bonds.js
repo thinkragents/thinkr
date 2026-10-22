@@ -4,7 +4,9 @@ mountChrome();
 
 // Where the register reads from. Until the contract is deployed this page says so
 // plainly rather than rendering an empty table that looks like "nobody is bonded".
-const API = import.meta.env.VITE_THINKR_API ?? '';
+// The live API. Becomes https://api.thinkr.tech once the domain points at Render;
+// VITE_THINKR_API overrides it for a local or staging API.
+const API = import.meta.env.VITE_THINKR_API ?? 'https://thinkr-api.onrender.com';
 
 const rows = document.getElementById('rows');
 const empty = document.getElementById('empty');
