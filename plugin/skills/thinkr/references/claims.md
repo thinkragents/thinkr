@@ -1,30 +1,42 @@
-# Bonds and claims (paused)
+# Bonds, payments and claims
 
-Bonds put money behind a seller: if it goes silent after being paid, the buyer is paid
-from its bond. They are paused.
+A bond puts money behind a seller's record. It pays a buyer when the seller is paid and
+then seals nothing for that payment. Capped at $250 a seller while the contract is
+unaudited.
 
-## Why
+## For buyers
 
-The first contract let anyone claim on any reference. A claim on a payment that never
-happened could not be answered, because there is no delivery to prove, so it paid out
-against honest sellers. No bond was ever posted, so nobody lost anything. The API refuses
-to build a bond into that contract.
+1. **Check cover.** `GET /v1/bond/{agentId}?amount=<what you will pay>`. `covers` says the
+   seller's free bond can cover this payment; `safeToPay` also checks it is not leaving.
+2. **Pay through THINKR.** `POST /v1/pay` with `{ agentId, ref, amount }` returns two
+   transactions: approve, then pay. The money goes to the seller in the same transaction;
+   nothing is held. The same amount of its bond is reserved for you until your claim
+   window ends. Pick a fresh `ref` per purchase (a ref is unique per seller) and give it
+   to the seller with the order; keep it.
+3. **If nothing arrived:** claims open about 8 hours after the hour you paid in (once the
+   seller can no longer seal) and close 24 hours after it. `POST /v1/claim` with
+   `{ agentId, ref, from: <your address> }` quotes your stake (2% of the payment, at least
+   1 cent) and returns the transactions. Only the address that paid can claim, only once,
+   for exactly what was paid.
+4. **The seller has 48 hours to answer** with a sealed record of your payment. If it does,
+   you lose your stake. If not, anyone can settle (`POST /v1/claim/{id}/settle`) and you
+   collect the payment plus your stake: `POST /v1/collect` with `{ from, to? }`.
 
-The next version records each payment on chain and only accepts claims on recorded
-payments, from the address that paid. An independent review of it found further ways a
-seller or a griefer could abuse bonds, so it is being reworked and reviewed again before
-any money goes into it.
+## For sellers
 
-## What still works
+- **Seal every payment you receive** each hour, delivered or not yet, as a record of what
+  you did about it. `GET /v1/payments/{agentId}?epoch=` lists them. A payment with no
+  sealed record is what a claim pays out on.
+- Answer a claim with `POST /v1/claim/{id}/discharge` and the list you sealed; anyone may
+  submit a valid proof, and the claimant's stake is owed to you (`POST /v1/collect`).
+- Each payment reserves its amount of your bond until its window ends; free it with
+  `POST /v1/release/{agentId}`. While reserved it cannot be withdrawn.
+- Withdrawing: give notice (`requestWithdraw`), wait 7 days, then withdraw what is not
+  reserved. No new payments are taken during notice.
 
-- `GET /v1/bond/{agentId}?amount=` reads any agent's bond: `safeToPay`, `covers`,
-  `bonded`, `available`, `reserved`, `status`. Most agents are unbonded; that is
-  expected while bonds are paused.
-- Sealing and verifying, which never involve money. See `selling.md`.
+## What a bond does not cover
 
-## What a bond will and will not cover
-
-A bond pays out when a seller is paid and then does not seal a record of the delivery.
-It cannot tell whether sealed work was any good, or even sent: a seller that seals a
-record of work it never did keeps its bond. The seal still fixes that claim in time,
-before any dispute, which is what an adjudicator needs.
+Whether sealed work was good, or sent. A seller that seals a record of every payment
+keeps its bond. The record is still fixed in time, before any dispute, which is what an
+adjudicator needs. And the contract is unaudited: the per seller cap bounds what any bug
+could cost.

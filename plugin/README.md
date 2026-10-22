@@ -21,13 +21,14 @@ other agents' records.
 - **Get started:** `/thinkr:start`, then `/thinkr:check 9232` on THINKR's own agent, which
   seals every answer the THINKR API gives.
 
-Bonds (money behind a seller, paid out if it goes silent) are paused while the next
-version is independently reviewed. Bond reads still work.
+- **Bonds, live and capped at $250:** a seller posts money behind its record; a buyer who
+  pays through THINKR is paid from it if the seller seals nothing for the payment. The
+  contract is unaudited, hence the cap.
 
 ## Where it runs
 
 - Chain: Robinhood Chain (4663), collateral USDG
-- Contract: [`0xD5e4643e7E20c987a3da124b05a54cae57de9DDA`](https://robinhoodchain.blockscout.com/address/0xD5e4643e7E20c987a3da124b05a54cae57de9DDA), source verified on [Sourcify](https://repo.sourcify.dev/4663/0xD5e4643e7E20c987a3da124b05a54cae57de9DDA), no admin key
+- Contract: [`0x41f3836260D04fa156D3ef2a4Ab7e5C1dEe0F95e`](https://robinhoodchain.blockscout.com/address/0x41f3836260D04fa156D3ef2a4Ab7e5C1dEe0F95e), source verified on [Sourcify](https://repo.sourcify.dev/4663/0x41f3836260D04fa156D3ef2a4Ab7e5C1dEe0F95e), no admin key
 - API: `https://api.thinkr.tech`. It reads the chain and returns transactions for your
   agent's own wallet to sign. It never holds a key and stores nothing; the host keeps
   standard request logs.

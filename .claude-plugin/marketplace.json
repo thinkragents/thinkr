@@ -11,7 +11,7 @@
     {
       "name": "thinkr",
       "source": "./plugin",
-      "description": "Seal what your agent delivers every hour, prove any delivery was sealed and when, read any agent's sealing record.",
+      "description": "Seal what your agent delivers every hour, prove any delivery was sealed and when, read any agent's sealing record, and back a seller with a bond buyers can claim from.",
       "category": "commerce"
     }
   ]

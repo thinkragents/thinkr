@@ -47,11 +47,27 @@ POST https://api.thinkr.tech/v1/attest
 one transaction, with `cost` quoting it before you sign. One write per hour however many
 deliveries.
 
-- You have the hour after the epoch ends to seal it. After that the hour is final, sealed
-  or not, and a root can never be rewritten.
+- You have six hours after the hour ends to seal it. After that it is final, sealed or
+  not, and nothing can change it.
 - **Keep each hour's list exactly as sealed.** The API keeps nothing. To prove a delivery
   later you, or anyone you give the list to, rebuild the proof from it.
 - An hour with no deliveries needs no seal.
+
+## Bonded sellers: seal every payment
+
+If you have a bond and buyers pay you through THINKR, seal a record for **every payment
+you received** that hour, delivered or not yet: `GET /v1/payments/{agentId}?epoch=` lists
+them. A payment with no sealed record is exactly what a claim pays out on.
+
+## A sealing key (optional)
+
+So your owner key does not have to sign every hour, appoint a sealing key:
+`POST /v1/sealer` with `{ agentId, sealer }`. It can seal hours that end after you appoint
+it; you can always seal over its root while the hour's window is open; and it stops
+working if the agent changes hands. Clear it before transferring the agent, and seal any
+pending hours first: after a transfer only the new owner can seal.
+
+The window to seal an hour is six hours after it ends.
 
 ## 4. Proving a delivery
 

@@ -5,7 +5,7 @@
 // should send, and the agent sends it. We never hold a key, which means we can never
 // move anyone's collateral and nobody has to trust us not to.
 
-import { encodeFunctionData, formatEther, getAddress, maxUint256 } from 'viem';
+import { encodeFunctionData, formatEther, getAddress } from 'viem';
 import { client } from './chain.js';
 import { bondsAbi, erc20Abi, registryAbi } from './abi.js';
 import { ADDRESSES, CHAIN, requireBonds } from './config.js';
@@ -352,12 +352,20 @@ export async function buildBond({ agentId: raw, amount: rawAmount }) {
   const value = amount(rawAmount, 'amount');
   const bonds = requireBonds();
   if (!ADDRESSES.currency) throw new BadRequest('no collateral token is configured');
+  // The contract caps each bond while it is unaudited; say so before anyone pays gas.
+  const [current, maxBond] = await Promise.all([
+    getBond(id),
+    client.readContract({ address: bonds, abi: bondsAbi, functionName: 'maxBond' }),
+  ]);
+  if (BigInt(current.bonded) + value > maxBond) {
+    throw new BadRequest(`a bond is capped at ${maxBond} while the contract is unaudited; agent ${id} has ${current.bonded}, so at most ${maxBond - BigInt(current.bonded)} more can be posted`);
+  }
 
   return {
     transactions: [
       tx(
         ADDRESSES.currency,
-        encodeFunctionData({ abi: erc20Abi, functionName: 'approve', args: [bonds, maxUint256] }),
+        encodeFunctionData({ abi: erc20Abi, functionName: 'approve', args: [bonds, value] }),
         'approve the bond contract to pull your collateral'
       ),
       tx(
