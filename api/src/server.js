@@ -120,8 +120,18 @@ export const server = createServer(async (req, res) => {
   }
 });
 
+// Render's free tier sleeps after 15 minutes without a request, and GitHub's scheduled
+// ping runs far less often than asked. A request to our own public address counts as a
+// visit, so it stays awake. Only on Render, which sets RENDER_EXTERNAL_URL.
+function keepAwake() {
+  const url = process.env.RENDER_EXTERNAL_URL;
+  if (!url) return;
+  setInterval(() => fetch(`${url}/health`).catch(() => {}), 10 * 60_000).unref();
+}
+
 if (import.meta.url === `file://${process.argv[1]}`) {
   demo.startDemoSealer();
+  keepAwake();
   server.listen(PORT, () => {
     console.log(`THINKR api on :${PORT}  chain ${CHAIN.id}  bonds ${ADDRESSES.bonds ?? 'not deployed'}`);
   });
