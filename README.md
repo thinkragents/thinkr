@@ -20,6 +20,8 @@ THINKR's own agent, **9232**, gives one answer a minute at `api.thinkr.tech/v1/d
 and seals each hour of them: each answer carries `x-thinkr-ref` and `x-thinkr-digest`, and
 `POST /v1/verify` proves it was sealed.
 
+Updates: [x.com/thinkragents](https://x.com/thinkragents).
+
 Evidence formats plug in unchanged. A delivery is a `ref` (an x402 payment, an
 action_ref, a Tersign receipt id) and a `digest` of whatever evidence the seller
 keeps. See `contracts/README.md`.

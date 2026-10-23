@@ -62,7 +62,9 @@ body::before {
   transition: var(--tx) var(--t-fast) var(--ease);
 }
 .nav__gh:hover { color: var(--ink); }
-.nav__gh + .act { margin-left: 0; }
+.nav__x { display: inline-flex; align-items: center; color: var(--ink-3); transition: var(--tx) var(--t-fast) var(--ease); }
+.nav__x:hover { color: var(--ink); }
+.nav__gh + .act, .nav__x + .act { margin-left: 0; }
 .nav__gh span { display: none; }
 @media (min-width: 860px) { .nav__gh span { display: inline; } }
 .act--solid { margin: 0; display: inline-block; }
